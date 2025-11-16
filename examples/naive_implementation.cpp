@@ -9,6 +9,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cstdlib>
+#include "vtk_writer.hpp"
 
 using namespace std;
 
@@ -283,9 +284,14 @@ int main() {
 	}
 
 	// Print out x velocity values
-	for (size_t i = 0; i < ux.size(); i++) {
-		cout << ux[i] << endl;
-	}
+	//for (size_t i = 0; i < ux.size(); i++) {
+	//	cout << ux[i] << endl;
+	//}
+
+	// Write output
+	std::string file_path = "paraview.vtk";
+	std::string pv_title = "LBM Field";
+	write_vtk(rho, ux, uy, Nx, Ny, file_path, pv_title);
 
 
 
