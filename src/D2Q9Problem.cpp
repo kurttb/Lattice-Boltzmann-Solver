@@ -83,7 +83,6 @@ namespace LBM {
 		size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
 		constexpr double Ma = 0.1; // Mach number
 		constexpr double Re = 100; // Reynolds number
-		constexpr size_t max_it = 50000; // Maximum number of iterations
 		constexpr double tol = 1e-4; // Steady-state tolerance
 
 
@@ -136,7 +135,7 @@ namespace LBM {
 
 #pragma omp parallel default(shared)
 	{
-		for (size_t it = 0; it < max_it; ++it) {
+		for (size_t it = 0; it < _Nt; ++it) {
 
 			// Compute macroscopic quantities from the distribution 
 			D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
