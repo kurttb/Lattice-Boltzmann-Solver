@@ -17,7 +17,7 @@ namespace LBM {
 	/////////// Preprocessor Functions
 	
 	// Constructor
-	D2Q9Problem::D2Q9Problem(const int Nx, const int Ny) {
+	D2Q9Problem::D2Q9Problem(const size_t Nx, const size_t Ny) {
 
 		// Set Grid sizes
 		_gridObj.Nx = Nx;
@@ -62,7 +62,7 @@ namespace LBM {
 
 
 	// Set number of time steps
-	void D2Q9Problem::setNumTimeSteps(const int Nt) {
+	void D2Q9Problem::setNumTimeSteps(const size_t Nt) {
 		_Nt = Nt;
 	}
 

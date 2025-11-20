@@ -6,8 +6,8 @@
 int main() {
 
 	// # grid points in each direction
-	const int Nx = 1000;
-	const int Ny = 1000;
+	const size_t Nx = 100;
+	const size_t Ny = 100;
 
 	// Define D2Q9 Lattice Problem
 	auto prob = LBM::D2Q9Problem(Nx, Ny);
@@ -19,7 +19,7 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	int Nt = 1000;
+	size_t Nt = 50000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set body forces

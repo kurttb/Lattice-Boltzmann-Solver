@@ -28,7 +28,7 @@ namespace LBM {
 			double _uy0 = 0.0;
 
 			// Number of time steps
-			int _Nt = 50000;
+			size_t _Nt = 50000;
 
 			// Fields
 			vector<double> _rho;
@@ -66,14 +66,14 @@ namespace LBM {
 	public:
 
 		// Constructor/Destructor
-		D2Q9Problem(const int Nx, const int Ny);
+		D2Q9Problem(const size_t Nx, const size_t Ny);
 		~D2Q9Problem();
 
 		// Pre-processing functions
 		void setIC(const double rho0, const double ux0, const double uy0);
 		void setForces(const double Fx, const double Fy);
 		void setBC(const string& BCLabel, const string& BCType, const double ux = 0.0, const double uy = 0.0);
-		void setNumTimeSteps(const int Nt);
+		void setNumTimeSteps(const size_t Nt);
 
 		// Run the simulation
 		void runSimulation();

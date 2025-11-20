@@ -4,10 +4,10 @@
 namespace LBM {
 
 struct CartesianGrid2D {
-	int Nx;
-	int Ny;
+	size_t Nx;
+	size_t Ny;
 
-	inline int idx(int i, int j) const {
+	int idx(size_t i, size_t j) const {
 
 		return i + j*Nx;
 	}
