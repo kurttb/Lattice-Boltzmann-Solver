@@ -21,9 +21,29 @@ add_library(LBM SHARED
 		src/VtkWriter.cpp
 )
 
+# Set location for exectuables
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+
+
+# Add exectuables (example)
+add_executable(Couette)
+
+
+# Add source files to executable
+target_sources(Couette
+	PRIVATE
+		examples/Couette.cpp
+)
+
+# Link Exectuable with the library
+target_link_libraries(Couette
+	PRIVATE
+		LBM
+)
 
 # Add include directory
 target_include_directories(LBM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(Couette PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 # Add compiler flag macro
