@@ -240,7 +240,7 @@ namespace LBM {
 
 
 			// Enforce Boundary Condition
-			enforceD2Q9BCs(_rho, _f, _w, _gridObj, U_lid, cs2, iyT);
+			enforceD2Q9BCs(_f, _w, _gridObj, U_lid, cs2, iyT);
 
 
 			// Bounce-back on bottom wall

@@ -6,8 +6,7 @@
 using namespace std;
 
 namespace LBM {
-	void enforceD2Q9BCs(const vector<double>& rho, 
-						vector<double>& f,
+	void enforceD2Q9BCs(vector<double>& f,
 						const double* w,
 						const LBM::CartesianGrid2D& gridObj,
 						const double U_lid,

@@ -18,12 +18,12 @@ int main() {
 
 	// Define knobs
 	string flow_type = "Couette"; 
-	constexpr size_t Nx = 1000; // Number of x coordinates
-	constexpr size_t Ny = 1000; // Number of y coordinates
+	constexpr size_t Nx = 100; // Number of x coordinates
+	constexpr size_t Ny = 100; // Number of y coordinates
 	constexpr size_t N = Nx*Ny; // Total number of grid nodes
 	constexpr double Ma = 0.1; // Mach number
 	constexpr double Re = 100; // Reynolds number
-	constexpr size_t max_it = 1000; // Maximum number of iterations
+	constexpr size_t max_it = 50000; // Maximum number of iterations
 	constexpr double tol = 1e-4; // Steady-state tolerance
 
 	// Initial Condition

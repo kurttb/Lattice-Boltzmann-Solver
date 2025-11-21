@@ -41,8 +41,8 @@ namespace LBM {
 		file << "LOOKUP_TABLE" << " " << "default" << std::endl;
 
 		// Write the density
-		for (int j = 0; j < Ny; ++j) {
-			for (int i = 0; i < Nx; ++i) {
+		for (size_t j = 0; j < Ny; ++j) {
+			for (size_t i = 0; i < Nx; ++i) {
 				file << rho[i] << " ";
 			}
 			file << "\n";
@@ -52,8 +52,8 @@ namespace LBM {
 
 		// Write Velocity
 		file << "VECTORS" << " " << "velocity" << " " << "double" << std::endl;
-		for (int j = 0; j < Ny; ++j) {
-			for (int i = 0; i < Nx; ++i) {
+		for (size_t j = 0; j < Ny; ++j) {
+			for (size_t i = 0; i < Nx; ++i) {
 				file << ux[i + Nx*j] << " " << uy[i + Nx*j] << " " << 0.0 << std::endl;
 			}
 			file << "\n";
