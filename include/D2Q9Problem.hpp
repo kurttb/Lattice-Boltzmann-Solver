@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include "GridTypes.hpp"
+#include "BoundaryConditions.hpp"
 
 
 using namespace std;
@@ -22,11 +23,6 @@ namespace LBM {
 			double _Fx = 0.0;
 			double _Fy = 0.0;
 
-			// Initial Conditions (scalars)
-			double _rho0 = 1.0;
-			double _ux0 = 0.0;
-			double _uy0 = 0.0;
-
 			// Number of time steps
 			size_t _Nt = 50000;
 
@@ -34,6 +30,9 @@ namespace LBM {
 			vector<double> _rho;
 			vector<double> _ux;
 			vector<double> _uy;
+
+			// Viscosity
+			double _nu;
 
 			// Distribution function
 			vector<double> _f;
@@ -47,20 +46,10 @@ namespace LBM {
 			string _filePath;
 
 			// Boundary Conditions
-			struct _BCData {
-
-				// BC Types
-				string _TBCType; // Top BC type
-				string _BBCType; // Bottom BC type
-				string _RBCType; // Right BC type
-				string _LBCType; // Left BC type
-
-				// BC values
-				double uxT; // Top ux
-				double uyT; // Top uy
-				double uxB; // Bottom ux
-				double uyB; // Bottom uy
-			};
+			BCData _BCTop;
+			BCData _BCBottom;
+			BCData _BCRight;
+			BCData _BCLeft;
 
 
 	public:
@@ -72,8 +61,9 @@ namespace LBM {
 		// Pre-processing functions
 		void setIC(const double rho0, const double ux0, const double uy0);
 		void setForces(const double Fx, const double Fy);
-		void setBC(const string& BCLabel, const string& BCType, const double ux = 0.0, const double uy = 0.0);
 		void setNumTimeSteps(const size_t Nt);
+		void setBC(const string& BCName, const string& BCType, const double uT = 0.0);
+		void setViscosity(const double nu);
 
 		// Run the simulation
 		void runSimulation();

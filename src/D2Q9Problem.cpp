@@ -30,6 +30,65 @@ namespace LBM {
 
 		// Set distribution function size
 		_f.resize(9*Nx*Ny);
+
+		// Set up top boundary condition
+		_BCTop.f_inc[0] = 2;
+		_BCTop.f_inc[1] = 3;
+		_BCTop.f_inc[2] = 4;
+		_BCTop.f_ref[0] = 6;
+		_BCTop.f_ref[1] = 7;
+		_BCTop.f_ref[2] = 8;
+
+		_BCTop.i_min = 0;
+		_BCTop.i_max = Nx - 1;
+		_BCTop.j_min = Ny - 1;
+		_BCTop.j_max = Ny - 1;
+
+
+		// Set up Bottom boundary condition
+		_BCBottom.f_inc[0] = 8;
+		_BCBottom.f_inc[1] = 7;
+		_BCBottom.f_inc[2] = 6;
+		_BCBottom.f_ref[0] = 4;
+		_BCBottom.f_ref[1] = 3;
+		_BCBottom.f_ref[2] = 2;
+
+		_BCBottom.i_min = 0;
+		_BCBottom.i_max = Nx - 1;
+		_BCBottom.j_min = 0;
+		_BCBottom.j_max = 0;
+
+		// Set up Right boundary condition
+		_BCRight.f_inc[0] = 2;
+		_BCRight.f_inc[1] = 1;
+		_BCRight.f_inc[2] = 8;
+		_BCRight.f_ref[0] = 6;
+		_BCRight.f_ref[1] = 5;
+		_BCRight.f_ref[2] = 4;
+
+
+		_BCRight.i_min = Nx - 1;
+		_BCRight.i_max = Nx - 1;
+		_BCRight.j_min = 0;
+		_BCRight.j_max = Ny - 1;
+
+		// Set up Left boundary condition
+		_BCLeft.f_inc[0] = 4;
+		_BCLeft.f_inc[1] = 5;
+		_BCLeft.f_inc[2] = 6;
+		_BCLeft.f_ref[0] = 8;
+		_BCLeft.f_ref[1] = 1;
+		_BCLeft.f_ref[2] = 2;
+
+		_BCLeft.i_min = 0;
+		_BCLeft.i_max = 0;
+		_BCLeft.j_min = 0;
+		_BCLeft.j_max = Ny - 1;
+	}
+
+	// Set Viscosity
+	void D2Q9Problem::setViscosity(const double nu) {
+		_nu = nu;
 	}
 
 
@@ -58,6 +117,38 @@ namespace LBM {
 		}
 	}
 
+	// Set Boundary Conditions
+	void D2Q9Problem::setBC(const string& BCName, const string& BCType, double uT) {
+		if (BCName == "Top") {
+			_BCTop.BCType = BCType;
+			_BCTop.U_wall = uT;
+			//cout << "Hello from the Top" << endl;
+			//cout << _BCTop.U_wall << endl;
+		}
+		else if (BCName == "Bottom") {
+			_BCBottom.BCType = BCType;
+			_BCBottom.U_wall = uT;
+			//cout << "Hello from the Bottom" << endl;
+			//cout << _BCBottom.U_wall << endl;
+		}
+		else if (BCName == "Right") {
+			_BCRight.BCType = BCType;
+			_BCRight.U_wall = uT;
+			//cout << "Hello from the Right" << endl;
+			//cout << _BCRight.U_wall << endl;
+		}
+		else if (BCName == "Left") {
+			_BCLeft.BCType = BCType;
+			_BCLeft.U_wall = uT;
+			//cout << "Hello from the Left" << endl;
+			//cout << _BCLeft.U_wall << endl;
+		}
+		else {
+			cout << "Boundary Name is not recognized" << endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
 
 
 
@@ -81,18 +172,11 @@ namespace LBM {
 	void D2Q9Problem::runSimulation() {
 				// Define knobs
 		size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
-		constexpr double Ma = 0.1; // Mach number
-		constexpr double Re = 100; // Reynolds number
-		constexpr double tol = 1e-4; // Steady-state tolerance
 
 
 		// Derive characteristics of the flow physics
-		size_t L = _gridObj.Ny - 1; // Length of the domain in the lattice
-		const double cs = 1.0 / sqrt(3); // Speed of sound
 		constexpr double cs2 = 1.0 / 3.0; // Speed of sound squared
-		double U_lid = Ma*cs; // Lid velocity
-		double nu = (U_lid*L) / Re; // Kinematic viscosity
-		double tau = ( nu/(cs2) ) + 0.5; // Relaxation parameter
+		double tau = ( _nu/(cs2) ) + 0.5; // Relaxation parameter
 		double omega = 1.0 / tau;
 
 
@@ -125,10 +209,10 @@ namespace LBM {
 
 
 		// Boundary Indices
-		constexpr size_t ixL = 0;
-		size_t ixR = _gridObj.Nx - 1;
-		constexpr size_t iyB = 0;
-		size_t iyT = _gridObj.Ny - 1;
+		//constexpr size_t ixL = 0;
+		//size_t ixR = _gridObj.Nx - 1;
+		//constexpr size_t iyB = 0;
+		//size_t iyT = _gridObj.Ny - 1;
 
 
 		// Start Update Loop
@@ -239,8 +323,36 @@ namespace LBM {
 			}
 
 
-			// Enforce Boundary Condition
-			enforceD2Q9BCs(_f, _w, _gridObj, U_lid, cs2, iyT);
+			// Enforce Boundary Conditions
+			//enforceD2Q9BCs(_f, _w, _gridObj, U_lid, cs2, iyT); //Legacy
+
+			if (_BCTop.BCType == "WallTangentVelocity") {
+				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
+			}
+			else if (_BCTop.BCType == "BounceBack") {
+				bounceBackD2Q9(_f, _gridObj, _BCTop);
+			}
+
+			if (_BCBottom.BCType == "WallTangentVelocity") {
+				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
+			}
+			else if (_BCBottom.BCType == "BounceBack") {
+				bounceBackD2Q9(_f, _gridObj, _BCBottom);
+			}
+
+			if (_BCRight.BCType == "WallTangentVelocity") {
+				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
+			}
+			else if (_BCRight.BCType == "BounceBack") {
+				bounceBackD2Q9(_f, _gridObj, _BCRight);
+			}
+
+			if (_BCLeft.BCType == "WallTangentVelocity") {
+				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
+			}
+			else if (_BCLeft.BCType == "BounceBack") {
+				bounceBackD2Q9(_f, _gridObj, _BCLeft);
+			}
 
 
 			// Bounce-back on bottom wall

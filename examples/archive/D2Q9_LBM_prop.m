@@ -7,7 +7,7 @@
 clear, clc, close all
 
 % Define knobs
-flow_type = "Channel"; % Options: Lid_Driven_Cavity, Couette, Channel
+flow_type = "Lid_Driven_Cavity"; % Options: Lid_Driven_Cavity, Couette, Channel
 Nx = 100; % Nodes in x
 Ny = 100; % Nodes in y
 Ma = 0.1; % Desired Mach number
