@@ -1,5 +1,6 @@
 // Example case using the modularized library for the case of a cavity with two moving lids
 #include <string>
+#include <cmath>
 #include "D2Q9Problem.hpp"
 
 
