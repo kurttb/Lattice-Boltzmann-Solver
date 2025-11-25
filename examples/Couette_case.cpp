@@ -16,7 +16,7 @@ int main() {
 	const size_t LChar = Ny; // Characteristic length scale
 
 	// Derive Viscosity and Derive Characteristic Velocity
-	double cs = 1.0 / sqrt(3); // Speed of sound
+	double cs = 1.0 / std::sqrt(3); // Speed of sound
 	double uChar = Ma*cs; // Characteristic Velocity
 	double nu = uChar * LChar / Re; // Viscosity
 
