@@ -24,12 +24,12 @@ int main() {
 	Kokkos::initialize();
 	{
 		// Define Knobs
-		constexpr size_t Nx = 100; // Number of x coordinates
-		constexpr size_t Ny = 100; // Number of y coordinates
+		constexpr size_t Nx = 1000; // Number of x coordinates
+		constexpr size_t Ny = 1000; // Number of y coordinates
 		constexpr size_t N = Nx*Ny; // Total number of grid nodes
 		constexpr double Ma = 0.1; // Mach number
 		constexpr double Re = 100; // Reynolds number
-		constexpr size_t max_it = 50000; // Maximum number of iterations
+		constexpr size_t max_it = 1000; // Maximum number of iterations
 
 		// Initial Condition
 		constexpr double rho_init = 1.0; // Initial density field
@@ -49,12 +49,12 @@ int main() {
 		double Fx = 0;
 
 		// Define Lattice - Start at rest, go east, and move counterclockwise
-		//constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-		//constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-		//constexpr double w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distro
-		constexpr Kokkos::Array<int, 9> ex = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-		constexpr Kokkos::Array<int, 9> ey = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-		constexpr Kokkos::Array<double, 9> w = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distro
+		constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
+		constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+		constexpr double w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distro
+		//constexpr Kokkos::Array<int, 9> ex = {0, 1, 1, 0, -1, -1, -1, 0, 1};
+		//constexpr Kokkos::Array<int, 9> ey = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+		//constexpr Kokkos::Array<double, 9> w = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distro
 
 		// Allocate Macroscopic Fields
 		Kokkos::View<double**> rho("rho", Ny, Nx);
