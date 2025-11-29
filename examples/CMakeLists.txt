@@ -18,3 +18,10 @@ add_executable(kokkos_implementation
 )
 target_link_libraries(kokkos_implementation PRIVATE Kokkos::kokkos)
 target_include_directories(kokkos_implementation PUBLIC ${LBM_INCLUDE_DIR})
+
+add_executable(kokkos_implementation_float 
+    kokkos_implementation_float.cpp
+    ../src/vtk_writer.cpp
+)
+target_link_libraries(kokkos_implementation_float PRIVATE Kokkos::kokkos)
+target_include_directories(kokkos_implementation_float PUBLIC ${LBM_INCLUDE_DIR})
