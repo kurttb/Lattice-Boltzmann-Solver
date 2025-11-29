@@ -18,12 +18,14 @@ int main(int argc, char* argv[]) {
 
     Kokkos::initialize(argc, argv);
     {
+        Kokkos::print_configuration(std::cout);
+
         // Define knobs
         // string flow_type = "Couette"; // Not used in logic directly except for Fx
         bool is_channel = false; // "Couette" by default
         
-        constexpr size_t Nx = 100; // Number of x coordinates
-        constexpr size_t Ny = 100; // Number of y coordinates
+        constexpr size_t Nx = 1000; // Number of x coordinates
+        constexpr size_t Ny = 1000; // Number of y coordinates
         constexpr size_t N = Nx*Ny; // Total number of grid nodes
         constexpr double Ma = 0.1; // Mach number
         constexpr double Re = 100; // Reynolds number
@@ -113,6 +115,8 @@ int main(int argc, char* argv[]) {
         // size_t ixR = Nx - 1;
         // size_t iyB = 0;
         size_t iyT = Ny - 1;
+
+        Kokkos::Timer timer;
 
         // Start Update Loop
         for (size_t it = 0; it < max_it; ++it) {
@@ -218,6 +222,10 @@ int main(int argc, char* argv[]) {
                 f(n, 8) = f(n, 4) + 2*w(8)*rho_ij*U_lid/cs2;
             });
         }
+
+        Kokkos::fence();
+        double time = timer.seconds();
+        printf("Runtime: %f s\n", time);
 
         // Write output
         // Copy back to host std::vector for the write_vtk function

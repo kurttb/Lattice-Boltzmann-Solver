@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(hello)
 
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../kokkos" "${CMAKE_CURRENT_BINARY_DIR}/kokkos")
+
 add_subdirectory(include)
 add_subdirectory(src)
 add_subdirectory(tests)
