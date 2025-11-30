@@ -22,6 +22,11 @@ namespace LBM {
 			float _Fx = 0.0;
 			float _Fy = 0.0;
 
+			// Initial Conditions
+			float _rho0 = 1.0;
+			float _ux0 = 0.0;
+			float _uy0 = 0.0;
+
 			// Number of time steps
 			size_t _Nt = 50000;
 
@@ -55,7 +60,7 @@ namespace LBM {
 
 		// Constructor/Destructor
 		D2Q9Problem(const size_t Nx, const size_t Ny);
-		~D2Q9Problem() = default;
+		~D2Q9Problem();
 
 		// Pre-processing functions
 		void setIC(const float rho0, const float ux0, const float uy0);

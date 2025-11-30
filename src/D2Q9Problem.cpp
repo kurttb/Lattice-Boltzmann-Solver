@@ -1,4 +1,4 @@
-#include <vector>
+#include <Kokkos_Core.hpp>
 #include <string>
 #include <iostream>
 #include <cmath>
@@ -24,12 +24,12 @@ namespace LBM {
 		_gridObj.Ny = Ny;
 
 		// Set state sizes
-		_rho.resize(Nx*Ny);
-		_ux.resize(Nx*Ny);
-		_uy.resize(Nx*Ny);
+		//_rho.resize(Nx*Ny);
+		//_ux.resize(Nx*Ny);
+		//_uy.resize(Nx*Ny);
 
 		// Set distribution function size
-		_f.resize(9*Nx*Ny);
+		//_f.resize(9*Nx*Ny);
 
 		// Set up top boundary condition
 		_BCTop.f_inc[0] = 2;
@@ -94,27 +94,30 @@ namespace LBM {
 
 	// Set initial condition
 	void D2Q9Problem::setIC(const double rho0, const double ux0, const double uy0) {
+		_rho0 = rho0;
+		_ux0 = ux0;
+		_uy0 = uy0;
 
 		// Fill vectors
-		std::fill(_rho.begin(), _rho.end(), rho0);
-		std::fill(_ux.begin(), _ux.end(), ux0);
-		std::fill(_uy.begin(), _uy.end(), uy0);
+		//std::fill(_rho.begin(), _rho.end(), rho0);
+		//std::fill(_ux.begin(), _ux.end(), ux0);
+		//std::fill(_uy.begin(), _uy.end(), uy0);
 
 		// Set distribution function to equilibrium
-		for(size_t j = 0; j < _gridObj.Ny; ++j) {
-			for(size_t i = 0; i < _gridObj.Nx; ++i) {
-				size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-				double uxn = _ux[n]; // Extract x velocity component
-				double uyn = _uy[n]; // Extract y velocity component
-				double u_sq_ind = _ux[n]*_ux[n] + _uy[n]*_uy[n]; // Square velocity at the current grid node
-				size_t base = 9*n;
+		//for(size_t j = 0; j < _gridObj.Ny; ++j) {
+			//for(size_t i = 0; i < _gridObj.Nx; ++i) {
+				//size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
+				//double uxn = _ux[n]; // Extract x velocity component
+				//double uyn = _uy[n]; // Extract y velocity component
+				//double u_sq_ind = _ux[n]*_ux[n] + _uy[n]*_uy[n]; // Square velocity at the current grid node
+				//size_t base = 9*n;
 
-				for(size_t k = 0; k < 9; ++k) {
-					double e_dot_u = uxn*static_cast<double>(_ex[k]) + uyn*static_cast<double>(_ey[k]);
-					_f[base + k] = _w[k] * _rho[n] * (1 + 3*e_dot_u + 4.5*e_dot_u*e_dot_u - 1.5*u_sq_ind);
-				}
-			}
-		}
+				//for(size_t k = 0; k < 9; ++k) {
+				//	double e_dot_u = uxn*static_cast<double>(_ex[k]) + uyn*static_cast<double>(_ey[k]);
+				//	_f[base + k] = _w[k] * _rho[n] * (1 + 3*e_dot_u + 4.5*e_dot_u*e_dot_u - 1.5*u_sq_ind);
+				//}
+			//}
+		//}
 	}
 
 	// Set Boundary Conditions
@@ -170,225 +173,112 @@ namespace LBM {
 
 	// Solve
 	void D2Q9Problem::runSimulation() {
-				// Define knobs
-		size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
+		
+		Kokkos::initialize;
+		{
+			// Define knobs
+			size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
 
 
-		// Derive characteristics of the flow physics
-		constexpr double cs2 = 1.0 / 3.0; // Speed of sound squared
-		double tau = ( _nu/(cs2) ) + 0.5; // Relaxation parameter
-		double omega = 1.0 / tau;
+			// Derive characteristics of the flow physics
+			constexpr float cs2 = 1.0f / 3.0f; // Speed of sound squared
+			float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
+			float omega = 1.0f / tau;
+
+			// Allocate state and distribution function
+			_rho = Kokkos::View<float*> ("rho", N);
+			_ux = Kokkos::View<float*> ("ux", N);
+			_uy = Kokkos::View<float*> ("uy", N);
+			_f = Kokkos::View<float**> ("f", N, 9);
+
+			// Inialize state and distribution function
+			Kokkos::deep_copy(_rho, _rho0);
+			Kokkos::deep_copy(_ux, _ux0);
+			Kokkos::deep_copy(_uy, _uy0);
+			Kokkos::deep_copy(_f, 0.0f);
+
+			// Copy handels
+			auto rho = _rho;
+			auto ux = _ux;
+			auto uy = _uy;
+			auto f = _f; 
+
+			// Allocate and Initialize Streaming Distribution Function
+			Kokkos::View<float**> fstream("fstream", N, 9);
+			Kokkos::deep_copy(fstream, 0.0f);
+
+			// Initialize Distribution Function to Equilibrium
+			Kokkos::parallel_for("equilibrium",
+				N,
+				KOKKOS_LAMBDA(const unsigned n) {
+					float uxn = ux(n);
+					float uyn = uy(n);
+					float rho_n = rho(n);
+					float u_sq_ind = uxn*uxn + uyn*uyn;
+
+					for (int k = 0; k < 9; ++k) {
+						float e_dot_u = uxn*static_cast<float>(_ex(k)) + uyn*static_cast<float>(_ey(k));
+						f(n, k) = w(k) * _rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+					}
+				}
+			);
 
 
-		// Define Lattice - Start at rest, go east, and move counterclockwise
-		//constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-		//constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-		//constexpr double w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distro
+			// Start Update Loop
+			for (size_t it = 0; it < _Nt; ++it) {
+
+				// Compute macroscopic quantities from the distribution 
+				D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
 
 
-
-		// Allocate Distribution Functions
-		vector<double> fstream(N*9, 0.0); // Distribution function after advection(9 for each grid node)
-
-
-		// Initialize to equilibrium
-	//	for(size_t j = 0; j < _gridObj.Ny; ++j) {
-	//		for(size_t i = 0; i < _gridObj.Nx; ++i) {
-	//			size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-	//			double uxn = _ux[n]; // Extract x velocity component
-	//			double uyn = _uy[n]; // Extract y velocity component
-	//			double u_sq_ind = _ux[n]*_ux[n] + _uy[n]*_uy[n]; // Square velocity at the current grid node
-	//			size_t base = 9*n;
-
-	//			for(size_t k = 0; k < 9; ++k) {
-	//				double e_dot_u = uxn*static_cast<double>(_ex[k]) + uyn*static_cast<double>(_ey[k]);
-	//				_f[base + k] = _w[k] * _rho[n] * (1 + 3*e_dot_u + 4.5*e_dot_u*e_dot_u - 1.5*u_sq_ind);
-	//			}
-	//		}
-	//	}
+				// Collision step
+				D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
 
 
-		// Boundary Indices
-		//constexpr size_t ixL = 0;
-		//size_t ixR = _gridObj.Nx - 1;
-		//constexpr size_t iyB = 0;
-		//size_t iyT = _gridObj.Ny - 1;
+				// Streaming step 
+				D2Q9Stream(_f, fstream, _ex, _ey, _gridObj);
+				
 
 
-		// Start Update Loop
-
-#pragma omp parallel default(shared)
-	{
-		for (size_t it = 0; it < _Nt; ++it) {
-
-			// Compute macroscopic quantities from the distribution 
-			D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
+				// Swap with f with fstream
+				#pragma omp single
+				{
+					_f.swap(fstream);
+				}
 
 
-			// Collision step
-			D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
+				// Enforce Boundary Conditions
+				if (_BCTop.BCType == "WallTangentVelocity") {
+					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
+				}
+				else if (_BCTop.BCType == "BounceBack") {
+					bounceBackD2Q9(_f, _gridObj, _BCTop);
+				}
 
+				if (_BCBottom.BCType == "WallTangentVelocity") {
+					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
+				}
+				else if (_BCBottom.BCType == "BounceBack") {
+					bounceBackD2Q9(_f, _gridObj, _BCBottom);
+				}
 
-			// Streaming step 
-			D2Q9Stream(_f, fstream, _ex, _ey, _gridObj);
-			
+				if (_BCRight.BCType == "WallTangentVelocity") {
+					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
+				}
+				else if (_BCRight.BCType == "BounceBack") {
+					bounceBackD2Q9(_f, _gridObj, _BCRight);
+				}
 
-
-			// Advection step on domain (Excluding top and right boundaries)
-		//	#pragma omp for collapse(2) schedule(static)
-		//	for(size_t j = 1; j < _gridObj.Ny - 1; ++j) {
-		//		for(size_t i = 1; i < _gridObj.Nx - 1; ++i) {
-		//			size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-		//			size_t base = 9*n;
-
-		//			for(size_t k = 0; k < 9; ++k) {
-		//				size_t i_new = i + ex[k];
-		//				size_t j_new = j + ey[k];
-		//				size_t n_new = i_new + _gridObj.Nx*j_new; // Location of point to be advected to
-
-		//				fstream[9*n_new + k] = f[base + k];
-
-		//			}
-		//		}
-		//	}
-
-
-		//	// Streaming left/right
-		//	#pragma omp for
-		//	for(size_t j = 1; j < _gridObj.Ny - 1; ++j) {
-		//		for(auto i: { size_t(0), size_t(_gridObj.Nx - 1) }) {
-		//			size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-		//			size_t base = 9*n;
-
-		//			for(size_t k = 0; k < 9; ++k) {
-		//				size_t i_new = (i + ex[k] + _gridObj.Nx) % _gridObj.Nx;
-		//				size_t j_new = j + ey[k];
-		//				size_t n_new = i_new + _gridObj.Nx*j_new; // Location of point to be advected to
-
-		//				fstream[9*n_new + k] = f[base + k];
-
-		//			}
-		//		}
-		//	}
-
-
-		//	// Streaming top/bottom
-		//	#pragma omp for
-		//	for(size_t i = 1; i < _gridObj.Nx - 1; ++i) {
-		//		for(auto j: { size_t(0), size_t(_gridObj.Ny - 1) }) {
-		//			size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-		//			size_t base = 9*n;
-
-		//			for(size_t k = 0; k < 9; ++k) {
-		//				size_t i_new = i + ex[k];
-		//				size_t j_new = (j + ey[k] + _gridObj.Ny) % _gridObj.Ny;
-
-		//				size_t n_new = i_new + _gridObj.Nx*j_new; // Location of point to be advected to
-
-		//				fstream[9*n_new + k] = f[base + k];
-
-		//			}
-		//		}
-		//	}
-
-
-
-		//	// Stream the corners
-		//	#pragma omp single
-		//	{
-		//		for(auto i: {size_t(0), size_t(_gridObj.Nx - 1)}) {
-		//			for(auto j: { size_t(0), size_t(_gridObj.Ny - 1) }) {
-		//				size_t n = i + _gridObj.Nx*j; // Current position on the flattened grid
-		//				size_t base = 9*n;
-
-		//				for(size_t k = 0; k < 9; ++k) {
-		//					size_t i_new = (i + ex[k] + _gridObj.Nx) % _gridObj.Nx;
-		//					size_t j_new = (j + ey[k] + _gridObj.Ny) % _gridObj.Ny;
-		//					size_t n_new = i_new + _gridObj.Nx*j_new; // Location of point to be advected to
-
-		//					fstream[9*n_new + k] = f[base + k];
-
-		//				}
-		//			}
-		//		}
-
-		//	}
-
-
-
-			// Swap with f with fstream
-			#pragma omp single
-			{
-				_f.swap(fstream);
+				if (_BCLeft.BCType == "WallTangentVelocity") {
+					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
+				}
+				else if (_BCLeft.BCType == "BounceBack") {
+					bounceBackD2Q9(_f, _gridObj, _BCLeft);
+				}
 			}
 
-
-			// Enforce Boundary Conditions
-			//enforceD2Q9BCs(_f, _w, _gridObj, U_lid, cs2, iyT); //Legacy
-
-			if (_BCTop.BCType == "WallTangentVelocity") {
-				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
-			}
-			else if (_BCTop.BCType == "BounceBack") {
-				bounceBackD2Q9(_f, _gridObj, _BCTop);
-			}
-
-			if (_BCBottom.BCType == "WallTangentVelocity") {
-				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
-			}
-			else if (_BCBottom.BCType == "BounceBack") {
-				bounceBackD2Q9(_f, _gridObj, _BCBottom);
-			}
-
-			if (_BCRight.BCType == "WallTangentVelocity") {
-				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
-			}
-			else if (_BCRight.BCType == "BounceBack") {
-				bounceBackD2Q9(_f, _gridObj, _BCRight);
-			}
-
-			if (_BCLeft.BCType == "WallTangentVelocity") {
-				tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
-			}
-			else if (_BCLeft.BCType == "BounceBack") {
-				bounceBackD2Q9(_f, _gridObj, _BCLeft);
-			}
-
-
-			// Bounce-back on bottom wall
-//			#pragma omp for
-//			for (size_t i = 0; i < _gridObj.Nx; ++i) {
-//
-//				size_t n = i; // Current position on the flattened grid (j = 0)
-//
-//				f[9*n + 2] = f[9*n + 6];
-//				f[9*n + 3] = f[9*n + 7];
-//				f[9*n + 4] = f[9*n + 8];
-//			}
-//
-//
-//			// Moving lid on top wall
-//			#pragma omp for
-//			for (size_t i = 0; i < _gridObj.Nx; ++i) {
-//				size_t n = i + _gridObj.Nx*iyT; // Current position on the flattened grid
-//
-//				// Calculate density at current grid location
-//				double rho_ij = 0.0;
-//				for (size_t k = 0; k < 9; ++k) {
-//					double f_curr = f[9*n + k];
-//					rho_ij += f_curr;
-//
-//				}
-//
-//				// Update distribution function
-//				f[9*n + 6] = f[9*n + 2] - 2*w[6]*rho_ij*U_lid/cs2;
-//				f[9*n + 7] = f[9*n + 3];
-//				f[9*n + 8] = f[9*n + 4] + 2*w[8]*rho_ij*U_lid/cs2;
-//			}
-//
+		Kokkos::finalize();
 		}
-	}
-
 	}
 
 
@@ -402,8 +292,6 @@ namespace LBM {
 		std::string pv_title = "LBM Field";
 		WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
 	}
-
-
 
 	// Destructor
 	D2Q9Problem::~D2Q9Problem() = default;
