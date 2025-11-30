@@ -5,9 +5,9 @@
 
 namespace LBM {
 
-	void WriteVtk(const std::vector<double>& rho, 
-				   const std::vector<double>& ux, 
-				   const std::vector<double>& uy, 
+	void WriteVtk(const std::vector<float>& rho, 
+				   const std::vector<float>& ux, 
+				   const std::vector<float>& uy, 
 				   const size_t Nx, const size_t Ny, 
 				   const std::string& file_path, 
 				   const std::string& pv_title) {
@@ -37,7 +37,7 @@ namespace LBM {
 		file << "\n";
 
 		// Header for density section
-		file << "SCALARS" << " " << "rho" << " " << "double" << " " << 1 << std::endl;
+		file << "SCALARS" << " " << "rho" << " " << "float" << " " << 1 << std::endl;
 		file << "LOOKUP_TABLE" << " " << "default" << std::endl;
 
 		// Write the density
@@ -51,7 +51,7 @@ namespace LBM {
 
 
 		// Write Velocity
-		file << "VECTORS" << " " << "velocity" << " " << "double" << std::endl;
+		file << "VECTORS" << " " << "velocity" << " " << "float" << std::endl;
 		for (size_t j = 0; j < Ny; ++j) {
 			for (size_t i = 0; i < Nx; ++i) {
 				file << ux[i + Nx*j] << " " << uy[i + Nx*j] << " " << 0.0 << std::endl;

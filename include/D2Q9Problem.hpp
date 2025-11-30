@@ -1,7 +1,6 @@
 #ifndef D2Q9_PROBLEM
 #define D2Q9_PROBLEM
 
-#include <Kokkos_Core.hpp>
 #include <vector>
 #include <string>
 #include "GridTypes.hpp"
@@ -31,20 +30,20 @@ namespace LBM {
 			size_t _Nt = 50000;
 
 			// Fields
-			Kokkos::View<float*> _rho;
-			Kokkos::View<float*> _ux;
-			Kokkos::View<float*> _uy;
+			vector<float> _rho;
+			vector<float> _ux;
+			vector<float> _uy;
 
 			// Viscosity
 			float _nu;
 
 			// Distribution function
-			Kokkos::View<float**> _f;
+			vector<float> _f;
 
 			// Define Lattice - Start at rest, go east, and move counterclockwise
 			static constexpr int _ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
 			static constexpr int _ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-			static constexpr double _w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
+			static constexpr float _w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
 
 			// Write path
             std::string _filePath;

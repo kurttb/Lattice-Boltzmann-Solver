@@ -177,40 +177,38 @@ namespace LBM {
 		Kokkos::initialize();
 		{
 			// Define knobs
-			size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
+			size_t Nx = _gridObj.Nx;
+			size_t Ny = _gridObj.Ny;
+			size_t N = Nx*Ny; // Total number of grid nodes
 
 
 			// Derive characteristics of the flow physics
+			const float U_lid = 0.058;
 			const float cs2 = 1.0f / 3.0f; // Speed of sound squared
 			const float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
 			const float omega = 1.0f / tau;
 
 			// Allocate state and distribution function
-			_rho = Kokkos::View<float*> ("rho", N);
-			_ux = Kokkos::View<float*> ("ux", N);
-			_uy = Kokkos::View<float*> ("uy", N);
-			_f = Kokkos::View<float**> ("f", N, 9);
+			Kokkos::View<float*> rho("rho", N);
+			Kokkos::View<float*> ux("ux", N);
+			Kokkos::View<float*> uy("uy", N);
+			Kokkos::View<float**> f("f", N, 9);
 
 			// Inialize state and distribution function
-			Kokkos::deep_copy(_rho, _rho0);
-			Kokkos::deep_copy(_ux, _ux0);
-			Kokkos::deep_copy(_uy, _uy0);
-			Kokkos::deep_copy(_f, 0.0f);
+			Kokkos::deep_copy(rho, _rho0);
+			Kokkos::deep_copy(ux, _ux0);
+			Kokkos::deep_copy(uy, _uy0);
+			Kokkos::deep_copy(f, 0.0f);
 
-			// Copy handels
-			auto rho = _rho;
-			auto ux = _ux;
-			auto uy = _uy;
-			auto f = _f; 
 
 			// Allocate and Initialize Streaming Distribution Function
 			Kokkos::View<float**> fstream("fstream", N, 9);
 			Kokkos::deep_copy(fstream, 0.0f);
 
 			// Initialize Distribution Function to Equilibrium
-			Kokkos::parallel_for("equilibrium",
+			Kokkos::parallel_for("InitEq",
 				N,
-				KOKKOS_LAMBDA(const unsigned n) {
+				KOKKOS_LAMBDA(const int n) {
 					float uxn = ux(n);
 					float uyn = uy(n);
 					float rho_n = rho(n);
@@ -218,10 +216,13 @@ namespace LBM {
 
 					for (int k = 0; k < 9; ++k) {
 						float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
-						f(n, k) = w(k) * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+						f(n, k) = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
 					}
 				}
 			);
+
+			// Boundary tag
+			size_t iyT = Ny - 1;
 
 
 			// Start Update Loop
@@ -229,14 +230,66 @@ namespace LBM {
 
 				// Compute macroscopic quantities from the distribution 
 				//D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
+				Kokkos::parallel_for("ComputeMacro",
+					N,
+					KOKKOS_LAMBDA(const int n) {
+						float rho_ij = 0;
+						float ux_ij = 0;
+						float uy_ij = 0;
+
+						for (int k = 0; k < 9; ++k) {
+							float f_curr = f(n, k);
+							rho_ij += f_curr;
+							ux_ij += f_curr * _ex[k];
+							uy_ij += f_curr * _ey[k];
+						}
+
+						ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
+						uy(n) = uy_ij / rho_ij;
+						rho(n) = rho_ij;
+					}
+				);
+				
 
 
 				// Collision step
 				//D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
+				Kokkos::parallel_for("Collision",
+					N,
+					KOKKOS_LAMBDA(const int n) {
+						float uxn = ux(n);
+						float uyn = uy(n);
+						float rho_n = rho(n);
+						float u_sq_ind = uxn*uxn + uyn*uyn;
+
+						for (int k = 0; k < 9; ++k) {
+							float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
+							float f_curr = f(n, k);
+							float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+							f(n, k) = f_curr - omega * (f_curr - feq_curr);
+						}
+					}
+				);
 
 
 				// Streaming step 
 				//D2Q9Stream(_f, fstream, _ex, _ey, _gridObj);
+				Kokkos::parallel_for("Streaming",
+					N,
+					KOKKOS_LAMBDA(const int n) {
+						int i = n % Nx;
+						int j = n % Nx;
+
+						for (int k = 0; k < 9; ++k) {
+							int i_dest = (i + _ex[k] + Nx) % Nx;
+							int j_dest = (j + _ey[k] + Ny) % Ny;
+
+							int n_new = i_dest + Nx*j_dest;
+
+							fstream(n_new, k) = f(n, k);
+						}
+					}
+				);
 				
 
 
@@ -245,6 +298,7 @@ namespace LBM {
 				//{
 				//	_f.swap(fstream);
 				//}
+				std::swap(f, fstream);
 
 
 				// Enforce Boundary Conditions
@@ -275,6 +329,34 @@ namespace LBM {
 			//	else if (_BCLeft.BCType == "BounceBack") {
 			//		bounceBackD2Q9(_f, _gridObj, _BCLeft);
 			//	}
+
+				// BounceBack on bottom
+				Kokkos::parallel_for("BounceBackBottom",
+					Nx,
+					KOKKOS_LAMBDA(const int i) {
+						int n = i; // j = 0
+						f(n, 2) = f(n, 6);
+						f(n, 3) = f(n, 7);
+						f(n, 4) = f(n, 8);
+					}
+				);
+
+				// Moving lid on top
+				Kokkos::parallel_for("MovingLidTop",
+					Nx,
+					KOKKOS_LAMBDA(const int i) {
+						int n = i + Nx*iyT;
+						float rho_ij = 0.0f;
+
+						for (int k = 0; k < 9; ++k) {
+							rho_ij += f(n, k);
+						}
+						f(n, 6) = f(n, 2) - 2.0f*_w[6]*rho_ij*U_lid/cs2;
+						f(n, 7) = f(n, 3);
+						f(n, 8) = f(n, 4) + 2.0f*_w[8]*rho_ij*U_lid/cs2;
+					}
+				);
+
 			}
 
 		}
@@ -288,10 +370,10 @@ namespace LBM {
 
 	/////////// Post-processing functions
 	// VTK Write
-	void D2Q9Problem::writeOutput(std::string filePath) {
-		std::string pv_title = "LBM Field";
-		WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
-	}
+	//void D2Q9Problem::writeOutput(std::string filePath) {
+	//	std::string pv_title = "LBM Field";
+	//	WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
+	//}
 
 	// Destructor
 	D2Q9Problem::~D2Q9Problem() = default;
