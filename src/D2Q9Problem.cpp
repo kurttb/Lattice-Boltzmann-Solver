@@ -87,13 +87,13 @@ namespace LBM {
 	}
 
 	// Set Viscosity
-	void D2Q9Problem::setViscosity(const double nu) {
+	void D2Q9Problem::setViscosity(const float nu) {
 		_nu = nu;
 	}
 
 
 	// Set initial condition
-	void D2Q9Problem::setIC(const double rho0, const double ux0, const double uy0) {
+	void D2Q9Problem::setIC(const float rho0, const float ux0, const float uy0) {
 		_rho0 = rho0;
 		_ux0 = ux0;
 		_uy0 = uy0;
@@ -121,7 +121,7 @@ namespace LBM {
 	}
 
 	// Set Boundary Conditions
-	void D2Q9Problem::setBC(const string& BCName, const string& BCType, double uT) {
+	void D2Q9Problem::setBC(const std::string& BCName, const std::string& BCType, float uT) {
 		if (BCName == "Top") {
 			_BCTop.BCType = BCType;
 			_BCTop.U_wall = uT;
@@ -161,7 +161,7 @@ namespace LBM {
 	}
 
 	// Set forces
-	void D2Q9Problem::setForces(const double Fx, const double Fy) {
+	void D2Q9Problem::setForces(const float Fx, const float Fy) {
 		_Fx = Fx;
 		_Fy = Fy;
 	}
@@ -174,16 +174,16 @@ namespace LBM {
 	// Solve
 	void D2Q9Problem::runSimulation() {
 		
-		Kokkos::initialize;
+		Kokkos::initialize();
 		{
 			// Define knobs
 			size_t N = _gridObj.Nx*_gridObj.Ny; // Total number of grid nodes
 
 
 			// Derive characteristics of the flow physics
-			constexpr float cs2 = 1.0f / 3.0f; // Speed of sound squared
-			float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
-			float omega = 1.0f / tau;
+			const float cs2 = 1.0f / 3.0f; // Speed of sound squared
+			const float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
+			const float omega = 1.0f / tau;
 
 			// Allocate state and distribution function
 			_rho = Kokkos::View<float*> ("rho", N);
@@ -217,8 +217,8 @@ namespace LBM {
 					float u_sq_ind = uxn*uxn + uyn*uyn;
 
 					for (int k = 0; k < 9; ++k) {
-						float e_dot_u = uxn*static_cast<float>(_ex(k)) + uyn*static_cast<float>(_ey(k));
-						f(n, k) = w(k) * _rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+						float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
+						f(n, k) = w(k) * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
 					}
 				}
 			);
@@ -228,57 +228,57 @@ namespace LBM {
 			for (size_t it = 0; it < _Nt; ++it) {
 
 				// Compute macroscopic quantities from the distribution 
-				D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
+				//D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
 
 
 				// Collision step
-				D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
+				//D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
 
 
 				// Streaming step 
-				D2Q9Stream(_f, fstream, _ex, _ey, _gridObj);
+				//D2Q9Stream(_f, fstream, _ex, _ey, _gridObj);
 				
 
 
 				// Swap with f with fstream
-				#pragma omp single
-				{
-					_f.swap(fstream);
-				}
+				//#pragma omp single
+				//{
+				//	_f.swap(fstream);
+				//}
 
 
 				// Enforce Boundary Conditions
-				if (_BCTop.BCType == "WallTangentVelocity") {
-					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
-				}
-				else if (_BCTop.BCType == "BounceBack") {
-					bounceBackD2Q9(_f, _gridObj, _BCTop);
-				}
+			//	if (_BCTop.BCType == "WallTangentVelocity") {
+			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
+			//	}
+			//	else if (_BCTop.BCType == "BounceBack") {
+			//		bounceBackD2Q9(_f, _gridObj, _BCTop);
+			//	}
 
-				if (_BCBottom.BCType == "WallTangentVelocity") {
-					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
-				}
-				else if (_BCBottom.BCType == "BounceBack") {
-					bounceBackD2Q9(_f, _gridObj, _BCBottom);
-				}
+			//	if (_BCBottom.BCType == "WallTangentVelocity") {
+			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
+			//	}
+			//	else if (_BCBottom.BCType == "BounceBack") {
+			//		bounceBackD2Q9(_f, _gridObj, _BCBottom);
+			//	}
 
-				if (_BCRight.BCType == "WallTangentVelocity") {
-					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
-				}
-				else if (_BCRight.BCType == "BounceBack") {
-					bounceBackD2Q9(_f, _gridObj, _BCRight);
-				}
+			//	if (_BCRight.BCType == "WallTangentVelocity") {
+			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
+			//	}
+			//	else if (_BCRight.BCType == "BounceBack") {
+			//		bounceBackD2Q9(_f, _gridObj, _BCRight);
+			//	}
 
-				if (_BCLeft.BCType == "WallTangentVelocity") {
-					tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
-				}
-				else if (_BCLeft.BCType == "BounceBack") {
-					bounceBackD2Q9(_f, _gridObj, _BCLeft);
-				}
+			//	if (_BCLeft.BCType == "WallTangentVelocity") {
+			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
+			//	}
+			//	else if (_BCLeft.BCType == "BounceBack") {
+			//		bounceBackD2Q9(_f, _gridObj, _BCLeft);
+			//	}
 			}
 
-		Kokkos::finalize();
 		}
+		Kokkos::finalize();
 	}
 
 
@@ -288,7 +288,7 @@ namespace LBM {
 
 	/////////// Post-processing functions
 	// VTK Write
-	void D2Q9Problem::writeOutput(string filePath) {
+	void D2Q9Problem::writeOutput(std::string filePath) {
 		std::string pv_title = "LBM Field";
 		WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
 	}
