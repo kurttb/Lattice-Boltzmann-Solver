@@ -13,13 +13,13 @@ namespace LBM {
 	// Structure for storing boundary condition data
 	struct BCData {
 		string BCType; // Name of boundary condition
-		size_t f_inc[3]; // Incident distribution function IDs
-		size_t f_ref[3]; // Reflected distribution function IDs
+		int f_inc[3]; // Incident distribution function IDs
+		int f_ref[3]; // Reflected distribution function IDs
 		double U_wall; // Wall velocity (if applicable)
-		size_t i_min; // Minimum i for the boundary condtion
-		size_t i_max; // Maximum i for the boundary condition
-		size_t j_min; // Minimum j for the boundary condtion
-		size_t j_max; // Maximum j for the boundary condition
+		int i_min; // Minimum i for the boundary condtion
+		int i_max; // Maximum i for the boundary condition
+		int j_min; // Minimum j for the boundary condtion
+		int j_max; // Maximum j for the boundary condition
 	};
 
 	// Bounce-Back BC

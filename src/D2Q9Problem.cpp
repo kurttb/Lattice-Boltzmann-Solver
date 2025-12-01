@@ -9,6 +9,7 @@
 #include "EquilibriumKokkos.hpp"
 #include "ComputeStateKokkos.hpp"
 #include "CollisionKokkos.hpp"
+#include "StreamingKokkos.hpp"
 #include "VtkWriter.hpp"
 #include "ComputeState.hpp"
 #include "Collisions.hpp"
@@ -257,56 +258,56 @@ namespace LBM {
 
 				// Compute macroscopic quantities from the distribution 
 				//D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
-			//	Kokkos::parallel_for("ComputeMacro",
-			//		N,
-			//		KOKKOS_LAMBDA(const int n) {
-			//			float rho_ij = 0;
-			//			float ux_ij = 0;
-			//			float uy_ij = 0;
-
-			//			for (int k = 0; k < 9; ++k) {
-			//				float f_curr = f(n, k);
-			//				rho_ij += f_curr;
-			//				ux_ij += f_curr * ex(k);
-			//				uy_ij += f_curr * ey(k);
-			//			}
-
-			//			ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
-			//			uy(n) = uy_ij / rho_ij;
-			//			rho(n) = rho_ij;
-			//		}
-			//	);
-
-				Kokkos::parallel_for("ComputeState",
+				Kokkos::parallel_for("ComputeMacro",
 					N,
-					ComputeState(rho, ux, uy, f, _ex, _ey, _Fx, _Fy, tau)
+					KOKKOS_LAMBDA(const int n) {
+						float rho_ij = 0;
+						float ux_ij = 0;
+						float uy_ij = 0;
+
+						for (int k = 0; k < 9; ++k) {
+							float f_curr = f(n, k);
+							rho_ij += f_curr;
+							ux_ij += f_curr * _ex[k];
+							uy_ij += f_curr * _ey[k];
+						}
+
+						ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
+						uy(n) = uy_ij / rho_ij;
+						rho(n) = rho_ij;
+					}
 				);
+
+		//		Kokkos::parallel_for("ComputeState",
+		//			N,
+		//			ComputeState(rho, ux, uy, f, _ex, _ey, _Fx, _Fy, tau)
+		//		);
 				
 
 
 				// Collision step
 				//D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
+				Kokkos::parallel_for("Collision",
+					N,
+					KOKKOS_LAMBDA(const int n) {
+						float uxn = ux(n);
+						float uyn = uy(n);
+						float rho_n = rho(n);
+						float u_sq_ind = uxn*uxn + uyn*uyn;
+
+						for (int k = 0; k < 9; ++k) {
+							float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
+							float f_curr = f(n, k);
+							float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+							f(n, k) = f_curr - omega * (f_curr - feq_curr);
+						}
+					}
+				);
+
 			//	Kokkos::parallel_for("Collision",
 			//		N,
-			//		KOKKOS_LAMBDA(const int n) {
-			//			float uxn = ux(n);
-			//			float uyn = uy(n);
-			//			float rho_n = rho(n);
-			//			float u_sq_ind = uxn*uxn + uyn*uyn;
-
-			//			for (int k = 0; k < 9; ++k) {
-			//				float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
-			//				float f_curr = f(n, k);
-			//				float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
-			//				f(n, k) = f_curr - omega * (f_curr - feq_curr);
-			//			}
-			//		}
+			//		ComputeCollision(rho, ux, uy, f, _ex, _ey, _w, omega)
 			//	);
-
-			Kokkos::parallel_for("Collision",
-				N,
-				ComputeCollision(rho, ux, uy, f, _ex, _ey, _w, omega)
-			);
 
 
 				// Streaming step 
@@ -327,6 +328,11 @@ namespace LBM {
 						}
 					}
 				);
+
+			//Kokkos::parallel_for("Streaming",
+			//	N,
+			//	ComputeStreaming(f, fstream, _ex, _ey, Nx, Ny)
+			//);
 				
 
 
@@ -344,6 +350,10 @@ namespace LBM {
 			//	}
 			//	else if (_BCTop.BCType == "BounceBack") {
 			//		bounceBackD2Q9(_f, _gridObj, _BCTop);
+		//			Kokkos::parallel_for("TopBounceBack",
+		//				Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCTop.j_min, _BCTop.i_min}, {_BCTop.j_max + 1, _BCTop.i_max + 1}),
+		//				BounceBack(f, _BCTop.f_inc, _BCTop.f_ref, Nx)
+		//			);
 			//	}
 
 			//	if (_BCBottom.BCType == "WallTangentVelocity") {
@@ -403,9 +413,11 @@ namespace LBM {
 			auto rho_h = Kokkos::create_mirror_view(rho);
 			auto ux_h = Kokkos::create_mirror_view(ux);
 			auto uy_h = Kokkos::create_mirror_view(uy);
+
 			Kokkos::deep_copy(rho_h, rho);
 			Kokkos::deep_copy(ux_h, ux);
 			Kokkos::deep_copy(uy_h, uy);
+
 			_rho.resize(Nx*Ny);
 			_ux.resize(Nx*Ny);
 			_uy.resize(Nx*Ny);
