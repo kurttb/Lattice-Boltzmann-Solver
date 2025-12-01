@@ -211,6 +211,14 @@ namespace LBM {
 		//	Kokkos::deep_copy(ey, ey_h);
 		//	Kokkos::deep_copy(w, w_h);
 
+		//	static constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
+		//	static constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+		//	static constexpr float w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
+		static const int* ex = _ex;
+		static const int* ey = _ey;
+		static const float* w = _w;
+
+
 			// Allocate state and distribution function
 			Kokkos::View<float*> rho("rho", N);
 			Kokkos::View<float*> ux("ux", N);
@@ -229,25 +237,25 @@ namespace LBM {
 			Kokkos::deep_copy(fstream, 0.0f);
 
 			// Initialize Distribution Function to Equilibrium
-		//	Kokkos::parallel_for("InitEq",
-		//		N,
-		//		KOKKOS_LAMBDA(const int n) {
-		//			float uxn = ux(n);
-		//			float uyn = uy(n);
-		//			float rho_n = rho(n);
-		//			float u_sq_ind = uxn*uxn + uyn*uyn;
-
-		//			for (int k = 0; k < 9; ++k) {
-		//				float e_dot_u = uxn*static_cast<float>(ex(k)) + uyn*static_cast<float>(ey(k));
-		//				f(n, k) = w(k) * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
-		//			}
-		//		}
-		//	);
-			
 			Kokkos::parallel_for("InitEq",
 				N,
-				CalcEq(rho, ux, uy, f, _ex, _ey, _w)
+				KOKKOS_LAMBDA(const int n) {
+					float uxn = ux(n);
+					float uyn = uy(n);
+					float rho_n = rho(n);
+					float u_sq_ind = uxn*uxn + uyn*uyn;
+
+					for (int k = 0; k < 9; ++k) {
+						float e_dot_u = uxn*static_cast<float>(ex[k]) + uyn*static_cast<float>(ey[k]);
+						f(n, k) = w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+					}
+				}
 			);
+			
+	//		Kokkos::parallel_for("InitEq",
+	//			N,
+	//			CalcEq(rho, ux, uy, f, _ex, _ey, _w)
+	//		);
 
 			// Boundary tag
 			size_t iyT = Ny - 1;
@@ -268,8 +276,8 @@ namespace LBM {
 						for (int k = 0; k < 9; ++k) {
 							float f_curr = f(n, k);
 							rho_ij += f_curr;
-							ux_ij += f_curr * _ex[k];
-							uy_ij += f_curr * _ey[k];
+							ux_ij += f_curr * ex[k];
+							uy_ij += f_curr * ey[k];
 						}
 
 						ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
@@ -296,9 +304,9 @@ namespace LBM {
 						float u_sq_ind = uxn*uxn + uyn*uyn;
 
 						for (int k = 0; k < 9; ++k) {
-							float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
+							float e_dot_u = uxn*static_cast<float>(ex[k]) + uyn*static_cast<float>(ey[k]);
 							float f_curr = f(n, k);
-							float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+							float feq_curr = w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
 							f(n, k) = f_curr - omega * (f_curr - feq_curr);
 						}
 					}
@@ -319,8 +327,8 @@ namespace LBM {
 						int j = n / Nx;
 
 						for (int k = 0; k < 9; ++k) {
-							int i_dest = (i + _ex[k] + Nx) % Nx;
-							int j_dest = (j + _ey[k] + Ny) % Ny;
+							int i_dest = (i + ex[k] + Nx) % Nx;
+							int j_dest = (j + ey[k] + Ny) % Ny;
 
 							int n_new = i_dest + Nx*j_dest;
 
@@ -398,9 +406,9 @@ namespace LBM {
 						for (int k = 0; k < 9; ++k) {
 							rho_ij += f(n, k);
 						}
-						f(n, 6) = f(n, 2) - 2.0f*_w[6]*rho_ij*U_lid/cs2;
+						f(n, 6) = f(n, 2) - 2.0f*w[6]*rho_ij*U_lid/cs2;
 						f(n, 7) = f(n, 3);
-						f(n, 8) = f(n, 4) + 2.0f*_w[8]*rho_ij*U_lid/cs2;
+						f(n, 8) = f(n, 4) + 2.0f*w[8]*rho_ij*U_lid/cs2;
 					}
 				);
 
