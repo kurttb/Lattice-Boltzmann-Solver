@@ -7,8 +7,8 @@
 int main() {
 
 	// Grid Points in Each Direction
-	const size_t Nx = 100;
-	const size_t Ny = 100;
+	const size_t Nx = 1000;
+	const size_t Ny = 1000;
 
 	// Set Problem Parameter
 	const double Re = 100; // Reynolds Number
@@ -33,7 +33,7 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	size_t Nt = 50000;
+	size_t Nt = 1000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions
@@ -66,8 +66,8 @@ int main() {
 	prob.runSimulation();
 
 	// Write the output
-	//std::string filePath = "Couette.vtk";
-	//prob.writeOutput(filePath);
+	std::string filePath = "Couette.vtk";
+	prob.writeOutput(filePath);
 
 
 	return 0;

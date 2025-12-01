@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include "D2Q9Problem.hpp"
+#include "EquilibriumKokkos.hpp"
+#include "ComputeStateKokkos.hpp"
+#include "CollisionKokkos.hpp"
 #include "VtkWriter.hpp"
 #include "ComputeState.hpp"
 #include "Collisions.hpp"
@@ -188,13 +191,32 @@ namespace LBM {
 			const float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
 			const float omega = 1.0f / tau;
 
+			// Allocate discrete velocity directions and weights
+		//	Kokkos::View<int*> ex("ex", 9);
+		//	Kokkos::View<int*> ey("ey", 9);
+		//	Kokkos::View<float*> w("w", 9);
+		//	auto ex_h = Kokkos::create_mirror_view(ex);
+		//	auto ey_h = Kokkos::create_mirror_view(ey);
+		//	auto w_h = Kokkos::create_mirror_view(w);
+
+		//	// Fill host and device velocities/weights
+		//	for (size_t i = 0; i < 9; ++i) {
+		//		ex_h(i) = _ex[i];
+		//		ey_h(i) = _ey[i];
+		//		w_h(i) = _w[i];
+		//	}
+
+		//	Kokkos::deep_copy(ex, ex_h);
+		//	Kokkos::deep_copy(ey, ey_h);
+		//	Kokkos::deep_copy(w, w_h);
+
 			// Allocate state and distribution function
 			Kokkos::View<float*> rho("rho", N);
 			Kokkos::View<float*> ux("ux", N);
 			Kokkos::View<float*> uy("uy", N);
 			Kokkos::View<float**> f("f", N, 9);
 
-			// Inialize state and distribution function
+			// Initalize state and distribution function
 			Kokkos::deep_copy(rho, _rho0);
 			Kokkos::deep_copy(ux, _ux0);
 			Kokkos::deep_copy(uy, _uy0);
@@ -206,19 +228,24 @@ namespace LBM {
 			Kokkos::deep_copy(fstream, 0.0f);
 
 			// Initialize Distribution Function to Equilibrium
+		//	Kokkos::parallel_for("InitEq",
+		//		N,
+		//		KOKKOS_LAMBDA(const int n) {
+		//			float uxn = ux(n);
+		//			float uyn = uy(n);
+		//			float rho_n = rho(n);
+		//			float u_sq_ind = uxn*uxn + uyn*uyn;
+
+		//			for (int k = 0; k < 9; ++k) {
+		//				float e_dot_u = uxn*static_cast<float>(ex(k)) + uyn*static_cast<float>(ey(k));
+		//				f(n, k) = w(k) * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+		//			}
+		//		}
+		//	);
+			
 			Kokkos::parallel_for("InitEq",
 				N,
-				KOKKOS_LAMBDA(const int n) {
-					float uxn = ux(n);
-					float uyn = uy(n);
-					float rho_n = rho(n);
-					float u_sq_ind = uxn*uxn + uyn*uyn;
-
-					for (int k = 0; k < 9; ++k) {
-						float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
-						f(n, k) = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
-					}
-				}
+				CalcEq(rho, ux, uy, f, _ex, _ey, _w)
 			);
 
 			// Boundary tag
@@ -230,46 +257,56 @@ namespace LBM {
 
 				// Compute macroscopic quantities from the distribution 
 				//D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
-				Kokkos::parallel_for("ComputeMacro",
+			//	Kokkos::parallel_for("ComputeMacro",
+			//		N,
+			//		KOKKOS_LAMBDA(const int n) {
+			//			float rho_ij = 0;
+			//			float ux_ij = 0;
+			//			float uy_ij = 0;
+
+			//			for (int k = 0; k < 9; ++k) {
+			//				float f_curr = f(n, k);
+			//				rho_ij += f_curr;
+			//				ux_ij += f_curr * ex(k);
+			//				uy_ij += f_curr * ey(k);
+			//			}
+
+			//			ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
+			//			uy(n) = uy_ij / rho_ij;
+			//			rho(n) = rho_ij;
+			//		}
+			//	);
+
+				Kokkos::parallel_for("ComputeState",
 					N,
-					KOKKOS_LAMBDA(const int n) {
-						float rho_ij = 0;
-						float ux_ij = 0;
-						float uy_ij = 0;
-
-						for (int k = 0; k < 9; ++k) {
-							float f_curr = f(n, k);
-							rho_ij += f_curr;
-							ux_ij += f_curr * _ex[k];
-							uy_ij += f_curr * _ey[k];
-						}
-
-						ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
-						uy(n) = uy_ij / rho_ij;
-						rho(n) = rho_ij;
-					}
+					ComputeState(rho, ux, uy, f, _ex, _ey, _Fx, _Fy, tau)
 				);
 				
 
 
 				// Collision step
 				//D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
-				Kokkos::parallel_for("Collision",
-					N,
-					KOKKOS_LAMBDA(const int n) {
-						float uxn = ux(n);
-						float uyn = uy(n);
-						float rho_n = rho(n);
-						float u_sq_ind = uxn*uxn + uyn*uyn;
+			//	Kokkos::parallel_for("Collision",
+			//		N,
+			//		KOKKOS_LAMBDA(const int n) {
+			//			float uxn = ux(n);
+			//			float uyn = uy(n);
+			//			float rho_n = rho(n);
+			//			float u_sq_ind = uxn*uxn + uyn*uyn;
 
-						for (int k = 0; k < 9; ++k) {
-							float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
-							float f_curr = f(n, k);
-							float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
-							f(n, k) = f_curr - omega * (f_curr - feq_curr);
-						}
-					}
-				);
+			//			for (int k = 0; k < 9; ++k) {
+			//				float e_dot_u = uxn*static_cast<float>(_ex[k]) + uyn*static_cast<float>(_ey[k]);
+			//				float f_curr = f(n, k);
+			//				float feq_curr = _w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+			//				f(n, k) = f_curr - omega * (f_curr - feq_curr);
+			//			}
+			//		}
+			//	);
+
+			Kokkos::parallel_for("Collision",
+				N,
+				ComputeCollision(rho, ux, uy, f, _ex, _ey, _w, omega)
+			);
 
 
 				// Streaming step 
@@ -278,7 +315,7 @@ namespace LBM {
 					N,
 					KOKKOS_LAMBDA(const int n) {
 						int i = n % Nx;
-						int j = n % Nx;
+						int j = n / Nx;
 
 						for (int k = 0; k < 9; ++k) {
 							int i_dest = (i + _ex[k] + Nx) % Nx;
@@ -357,6 +394,25 @@ namespace LBM {
 					}
 				);
 
+			// End of time loop
+			}
+
+			Kokkos::fence();
+
+			// Fill vectors with the Kokkos views
+			auto rho_h = Kokkos::create_mirror_view(rho);
+			auto ux_h = Kokkos::create_mirror_view(ux);
+			auto uy_h = Kokkos::create_mirror_view(uy);
+			Kokkos::deep_copy(rho_h, rho);
+			Kokkos::deep_copy(ux_h, ux);
+			Kokkos::deep_copy(uy_h, uy);
+			_rho.resize(Nx*Ny);
+			_ux.resize(Nx*Ny);
+			_uy.resize(Nx*Ny);
+			for (int i = 0; i < N; ++i) {
+				_rho[i] = rho_h(i);
+				_ux[i] = ux_h(i);
+				_uy[i] = uy_h(i);
 			}
 
 		}
@@ -370,10 +426,10 @@ namespace LBM {
 
 	/////////// Post-processing functions
 	// VTK Write
-	//void D2Q9Problem::writeOutput(std::string filePath) {
-	//	std::string pv_title = "LBM Field";
-	//	WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
-	//}
+	void D2Q9Problem::writeOutput(std::string filePath) {
+		std::string pv_title = "LBM Field";
+		WriteVtk(_rho, _ux, _uy, _gridObj.Nx, _gridObj.Ny, filePath, pv_title);
+	}
 
 	// Destructor
 	D2Q9Problem::~D2Q9Problem() = default;
