@@ -11,9 +11,6 @@
 #include "CollisionKokkos.hpp"
 #include "StreamingKokkos.hpp"
 #include "VtkWriter.hpp"
-#include "ComputeState.hpp"
-#include "Collisions.hpp"
-#include "Streaming.hpp"
 #include "BoundaryConditions.hpp"
 
 namespace LBM {
@@ -185,6 +182,9 @@ namespace LBM {
 			size_t Ny = _gridObj.Ny;
 			size_t N = Nx*Ny; // Total number of grid nodes
 
+			// Forces
+			const float Fx = _Fx;
+			const float Fy = _Fy;
 
 			// Derive characteristics of the flow physics
 			const float U_lid = 0.058;
@@ -204,19 +204,18 @@ namespace LBM {
 		//	for (size_t i = 0; i < 9; ++i) {
 		//		ex_h(i) = _ex[i];
 		//		ey_h(i) = _ey[i];
-		//		w_h(i) = _w[i];
 		//	}
 
 		//	Kokkos::deep_copy(ex, ex_h);
 		//	Kokkos::deep_copy(ey, ey_h);
 		//	Kokkos::deep_copy(w, w_h);
 
-		//	static constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-		//	static constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-		//	static constexpr float w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
-		static const int* ex = _ex;
-		static const int* ey = _ey;
-		static const float* w = _w;
+			constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
+			constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+			constexpr float w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
+		//static const int* ex = _ex;
+		//static const int* ey = _ey;
+		//static const float* w = _w;
 
 
 			// Allocate state and distribution function
@@ -260,6 +259,9 @@ namespace LBM {
 			// Boundary tag
 			size_t iyT = Ny - 1;
 
+			// Set timer
+			Kokkos::Timer timer;
+
 
 			// Start Update Loop
 			for (size_t it = 0; it < _Nt; ++it) {
@@ -280,7 +282,8 @@ namespace LBM {
 							uy_ij += f_curr * ey[k];
 						}
 
-						ux(n) = (ux_ij / rho_ij) + (_Fx*tau / rho_ij);
+						ux(n) = (ux_ij / rho_ij) + (Fx*tau / rho_ij);
+						uy(n) = (uy_ij / rho_ij) + (Fy*tau / rho_ij);
 						uy(n) = uy_ij / rho_ij;
 						rho(n) = rho_ij;
 					}
@@ -416,6 +419,8 @@ namespace LBM {
 			}
 
 			Kokkos::fence();
+			double time = timer.seconds();
+			std::cout << "Time" << time << std::endl;
 
 			// Fill vectors with the Kokkos views
 			auto rho_h = Kokkos::create_mirror_view(rho);
