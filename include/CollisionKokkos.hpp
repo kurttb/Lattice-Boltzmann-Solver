@@ -35,9 +35,6 @@ struct ComputeCollision {
 		float u_sq_ind = uxn*uxn + uyn*uyn;
 
 		for (int k = 0; k < 9; ++k) {
-			float e_dot_u = uxn*static_cast<float>(ex_d[k]) + uyn*static_cast<float>(ey_d[k]);
-			float f_curr = f(n, k);
-			float feq_curr = w_d[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
 			float e_dot_u = uxn*static_cast<float>(ex_coll[k]) + uyn*static_cast<float>(ey_coll[k]);
 			float f_curr = f(n, k);
 			float feq_curr = w_coll[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
