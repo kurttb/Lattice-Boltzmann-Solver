@@ -10,6 +10,7 @@
 #include "ComputeStateKokkos.hpp"
 #include "CollisionKokkos.hpp"
 #include "StreamingKokkos.hpp"
+#include "BCsKokkos.hpp"
 #include "VtkWriter.hpp"
 
 namespace LBM {
@@ -342,80 +343,96 @@ namespace LBM {
 			//		}
 			//	);
 
-			Kokkos::parallel_for("Streaming",
-				N,
-				ComputeStreaming(f, fstream, Nx, Ny)
-			);
+				Kokkos::parallel_for("Streaming",
+					N,
+					ComputeStreaming(f, fstream, Nx, Ny)
+				);
 				
 
 
 				// Swap with f with fstream
-				//#pragma omp single
-				//{
-				//	_f.swap(fstream);
-				//}
 				std::swap(f, fstream);
 
 
 				// Enforce Boundary Conditions
-			//	if (_BCTop.BCType == "WallTangentVelocity") {
-			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCTop);
-			//	}
-			//	else if (_BCTop.BCType == "BounceBack") {
-			//		bounceBackD2Q9(_f, _gridObj, _BCTop);
-		//			Kokkos::parallel_for("TopBounceBack",
-		//				Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCTop.j_min, _BCTop.i_min}, {_BCTop.j_max + 1, _BCTop.i_max + 1}),
-		//				BounceBack(f, _BCTop.f_inc, _BCTop.f_ref, Nx)
-		//			);
-			//	}
+				if (_BCTop.BCType == "WallTangentVelocity") {
+					Kokkos::parallel_for("TopTanVel",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCTop.j_min, _BCTop.i_min}, {_BCTop.j_max + 1, _BCTop.i_max + 1}),
+						TangentVelocity(f, _BCTop.f_inc, _BCTop.f_ref, _BCTop.U_wall, cs2, Nx)
+					);
+				}
+				else if (_BCTop.BCType == "BounceBack") {
+					Kokkos::parallel_for("TopBounceBack",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCTop.j_min, _BCTop.i_min}, {_BCTop.j_max + 1, _BCTop.i_max + 1}),
+						BounceBack(f, _BCTop.f_inc, _BCTop.f_ref, Nx)
+					);
+				}
 
-			//	if (_BCBottom.BCType == "WallTangentVelocity") {
-			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCBottom);
-			//	}
-			//	else if (_BCBottom.BCType == "BounceBack") {
-			//		bounceBackD2Q9(_f, _gridObj, _BCBottom);
-			//	}
+				if (_BCBottom.BCType == "WallTangentVelocity") {
+					Kokkos::parallel_for("BotTanVel",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCBottom.j_min, _BCBottom.i_min}, {_BCBottom.j_max + 1, _BCBottom.i_max + 1}),
+						TangentVelocity(f, _BCBottom.f_inc, _BCBottom.f_ref, _BCBottom.U_wall, cs2, Nx)
+					);
+				}
+				else if (_BCBottom.BCType == "BounceBack") {
+					Kokkos::parallel_for("BottomBounceBack",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCBottom.j_min, _BCBottom.i_min}, {_BCBottom.j_max + 1, _BCBottom.i_max + 1}),
+						BounceBack(f, _BCBottom.f_inc, _BCBottom.f_ref, Nx)
+					);
+				}
 
-			//	if (_BCRight.BCType == "WallTangentVelocity") {
-			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCRight);
-			//	}
-			//	else if (_BCRight.BCType == "BounceBack") {
-			//		bounceBackD2Q9(_f, _gridObj, _BCRight);
-			//	}
+				if (_BCRight.BCType == "WallTangentVelocity") {
+					Kokkos::parallel_for("RightTanVel",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCRight.j_min, _BCRight.i_min}, {_BCRight.j_max + 1, _BCRight.i_max + 1}),
+						TangentVelocity(f, _BCRight.f_inc, _BCRight.f_ref, _BCRight.U_wall, cs2, Nx)
+					);
+				}
+				else if (_BCRight.BCType == "BounceBack") {
+					Kokkos::parallel_for("RightBounceBack",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCRight.j_min, _BCRight.i_min}, {_BCRight.j_max + 1, _BCRight.i_max + 1}),
+						BounceBack(f, _BCRight.f_inc, _BCRight.f_ref, Nx)
+					);
+				}
 
-			//	if (_BCLeft.BCType == "WallTangentVelocity") {
-			//		tangentVelocityD2Q9(_f, _w, cs2, _gridObj, _BCLeft);
-			//	}
-			//	else if (_BCLeft.BCType == "BounceBack") {
-			//		bounceBackD2Q9(_f, _gridObj, _BCLeft);
-			//	}
+				if (_BCLeft.BCType == "WallTangentVelocity") {
+					Kokkos::parallel_for("LeftTanVel",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCLeft.j_min, _BCLeft.i_min}, {_BCLeft.j_max + 1, _BCLeft.i_max + 1}),
+						TangentVelocity(f, _BCLeft.f_inc, _BCLeft.f_ref, _BCLeft.U_wall, cs2, Nx)
+					);
+				}
+				else if (_BCLeft.BCType == "BounceBack") {
+					Kokkos::parallel_for("LeftBounceBack",
+						Kokkos::MDRangePolicy<Kokkos::Rank<2>>({_BCLeft.j_min, _BCLeft.i_min}, {_BCLeft.j_max + 1, _BCLeft.i_max + 1}),
+						BounceBack(f, _BCLeft.f_inc, _BCLeft.f_ref, Nx)
+					);
+				}
 
 				// BounceBack on bottom
-				Kokkos::parallel_for("BounceBackBottom",
-					Nx,
-					KOKKOS_LAMBDA(const int i) {
-						int n = i; // j = 0
-						f(n, 2) = f(n, 6);
-						f(n, 3) = f(n, 7);
-						f(n, 4) = f(n, 8);
-					}
-				);
+			//	Kokkos::parallel_for("BounceBackBottom",
+			//		Nx,
+			//		KOKKOS_LAMBDA(const int i) {
+			//			int n = i; // j = 0
+			//			f(n, 2) = f(n, 6);
+			//			f(n, 3) = f(n, 7);
+			//			f(n, 4) = f(n, 8);
+			//		}
+			//	);
 
 				// Moving lid on top
-				Kokkos::parallel_for("MovingLidTop",
-					Nx,
-					KOKKOS_LAMBDA(const int i) {
-						int n = i + Nx*iyT;
-						float rho_ij = 0.0f;
+		//		Kokkos::parallel_for("MovingLidTop",
+		//			Nx,
+		//			KOKKOS_LAMBDA(const int i) {
+		//				int n = i + Nx*iyT;
+		//				float rho_ij = 0.0f;
 
-						for (int k = 0; k < 9; ++k) {
-							rho_ij += f(n, k);
-						}
-						f(n, 6) = f(n, 2) - 2.0f*w[6]*rho_ij*U_lid/cs2;
-						f(n, 7) = f(n, 3);
-						f(n, 8) = f(n, 4) + 2.0f*w[8]*rho_ij*U_lid/cs2;
-					}
-				);
+		//				for (int k = 0; k < 9; ++k) {
+		//					rho_ij += f(n, k);
+		//				}
+		//				f(n, 6) = f(n, 2) - 2.0f*w[6]*rho_ij*U_lid/cs2;
+		//				f(n, 7) = f(n, 3);
+		//				f(n, 8) = f(n, 4) + 2.0f*w[8]*rho_ij*U_lid/cs2;
+		//			}
+		//		);
 
 			// End of time loop
 			}
@@ -436,6 +453,7 @@ namespace LBM {
 			_rho.resize(Nx*Ny);
 			_ux.resize(Nx*Ny);
 			_uy.resize(Nx*Ny);
+
 			for (int i = 0; i < N; ++i) {
 				_rho[i] = rho_h(i);
 				_ux[i] = ux_h(i);

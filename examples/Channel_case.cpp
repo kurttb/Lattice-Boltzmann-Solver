@@ -7,7 +7,7 @@
 int main() {
 
 	// Grid Points in Each Direction
-	const size_t Nx = 800;
+	const size_t Nx = 100;
 	const size_t Ny = 100;
 
 	// Set Problem Parameter
