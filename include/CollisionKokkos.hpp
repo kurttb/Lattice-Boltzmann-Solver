@@ -22,14 +22,13 @@ struct ComputeCollision {
 
 	KOKKOS_INLINE_FUNCTION
 	void operator() (const int n) const {
-		static const int   ex_d[9] = {0, 1, 1, 0, -1, -1, -1,  0,  1};
-		static const int   ey_d[9] = {0, 0, 1, 1,  1,  0, -1, -1, -1};
-		static const float w_d[9]  = {4.0f/9.0f,
+		static const int   ex_coll[9] = {0, 1, 1, 0, -1, -1, -1,  0,  1};
+		static const int   ey_coll[9] = {0, 0, 1, 1,  1,  0, -1, -1, -1};
+		static const float w_coll[9]  = {4.0f/9.0f,
                                             1.0f/9.0f, 1.0f/36.0f,
                                             1.0f/9.0f, 1.0f/36.0f,
                                             1.0f/9.0f, 1.0f/36.0f,
                                             1.0f/9.0f, 1.0f/36.0f};
-
 		float uxn = ux(n);
 		float uyn = uy(n);
 		float rho_n = rho(n);
@@ -39,6 +38,9 @@ struct ComputeCollision {
 			float e_dot_u = uxn*static_cast<float>(ex_d[k]) + uyn*static_cast<float>(ey_d[k]);
 			float f_curr = f(n, k);
 			float feq_curr = w_d[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+			float e_dot_u = uxn*static_cast<float>(ex_coll[k]) + uyn*static_cast<float>(ey_coll[k]);
+			float f_curr = f(n, k);
+			float feq_curr = w_coll[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
 			f(n, k) = f_curr - omega * (f_curr - feq_curr);
 		}
 	}

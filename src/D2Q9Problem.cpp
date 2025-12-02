@@ -176,11 +176,14 @@ namespace LBM {
 		
 		Kokkos::initialize();
 		{
+			// Show what Kokkos is running on
+			Kokkos::print_configuration(std::cout);
+			
 			// Define knobs
 			size_t Nx = _gridObj.Nx;
 			size_t Ny = _gridObj.Ny;
 			size_t N = Nx*Ny; // Total number of grid nodes
-
+			
 			// Forces
 			const float Fx = _Fx;
 			const float Fy = _Fy;

@@ -1,0 +1,14 @@
+add_executable(Channel_case Channel_case.cpp)
+target_link_libraries(Channel_case PRIVATE lbm_lib)
+
+add_executable(Couette_case Couette_case.cpp)
+target_link_libraries(Couette_case PRIVATE lbm_lib)
+
+add_executable(Couette_kokkos_case Couette_kokkos_case.cpp)
+target_link_libraries(Couette_kokkos_case PRIVATE lbm_lib)
+
+add_executable(DoubleCavity_case DoubleCavity_case.cpp)
+target_link_libraries(DoubleCavity_case PRIVATE lbm_lib)
+
+add_executable(LidDrivenCavity_case LidDrivenCavity_case.cpp)
+target_link_libraries(LidDrivenCavity_case PRIVATE lbm_lib)
