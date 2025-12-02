@@ -33,7 +33,7 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	size_t Nt = 1000;
+	size_t Nt = 50000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions
