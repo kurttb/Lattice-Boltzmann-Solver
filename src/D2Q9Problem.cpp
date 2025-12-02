@@ -298,27 +298,27 @@ namespace LBM {
 
 				// Collision step
 				//D2Q9BGKCollision(_rho, _ux, _uy, _f, _ex, _ey, _w, _gridObj, omega);
-				Kokkos::parallel_for("Collision",
-					N,
-					KOKKOS_LAMBDA(const int n) {
-						float uxn = ux(n);
-						float uyn = uy(n);
-						float rho_n = rho(n);
-						float u_sq_ind = uxn*uxn + uyn*uyn;
-
-						for (int k = 0; k < 9; ++k) {
-							float e_dot_u = uxn*static_cast<float>(ex[k]) + uyn*static_cast<float>(ey[k]);
-							float f_curr = f(n, k);
-							float feq_curr = w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
-							f(n, k) = f_curr - omega * (f_curr - feq_curr);
-						}
-					}
-				);
-
 			//	Kokkos::parallel_for("Collision",
 			//		N,
-			//		ComputeCollision(rho, ux, uy, f, _ex, _ey, _w, omega)
+			//		KOKKOS_LAMBDA(const int n) {
+			//			float uxn = ux(n);
+			//			float uyn = uy(n);
+			//			float rho_n = rho(n);
+			//			float u_sq_ind = uxn*uxn + uyn*uyn;
+
+			//			for (int k = 0; k < 9; ++k) {
+			//				float e_dot_u = uxn*static_cast<float>(ex[k]) + uyn*static_cast<float>(ey[k]);
+			//				float f_curr = f(n, k);
+			//				float feq_curr = w[k] * rho_n * (1.0f + 3.0f*e_dot_u + 4.5f*e_dot_u*e_dot_u - 1.5f*u_sq_ind);
+			//				f(n, k) = f_curr - omega * (f_curr - feq_curr);
+			//			}
+			//		}
 			//	);
+
+				Kokkos::parallel_for("Collision",
+					N,
+					ComputeCollision(rho, ux, uy, f, omega)
+				);
 
 
 				// Streaming step 
