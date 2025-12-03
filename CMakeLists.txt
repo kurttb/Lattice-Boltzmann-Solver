@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Define Variables for Kokkos Backend
-set(Kokkos_ROOT "/usr" CACHE PATH "Root directory of Kokkos installation")
+set(Kokkos_ROOT "/usr/local" CACHE PATH "Root directory of Kokkos installation")
 
 # Find Kokkos
 find_package(Kokkos REQUIRED)
