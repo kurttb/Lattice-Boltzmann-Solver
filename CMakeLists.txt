@@ -14,11 +14,11 @@ find_package(Kokkos REQUIRED)
 
 
 # Set Location for Libraries
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 
 # Add Library and its source files
-add_library(LBM SHARED
+add_library(LBM STATIC
 		src/D2Q9Problem.cpp
 		src/VtkWriter.cpp
 )
@@ -70,7 +70,6 @@ endmacro()
 # Add compiler flags
 add_compiler_flag("-O3")
 add_compiler_flag("-ffast-math")
-#add_compiler_flag("-march=native")
 add_compiler_flag("-Wall")
 add_compiler_flag("-Wextra")
 add_compiler_flag("-Wpedantic")

@@ -27,7 +27,7 @@ namespace LBM {
 			float _uy0 = 0.0;
 
 			// Number of time steps
-			size_t _Nt = 50000;
+			int _Nt = 50000;
 
 			// Fields
 			vector<float> _rho;

@@ -21,11 +21,7 @@ struct ComputeStreaming {
 	void operator() (const int n) const {
 		static const int ex_stream[9] = {0, 1, 1, 0, -1, -1, -1,  0,  1};
 		static const int ey_stream[9] = {0, 0, 1, 1,  1,  0, -1, -1, -1};
-		static const float w_stream[9]  = {4.0f/9.0f,
-                                            1.0f/9.0f, 1.0f/36.0f,
-                                            1.0f/9.0f, 1.0f/36.0f,
-                                            1.0f/9.0f, 1.0f/36.0f,
-                                            1.0f/9.0f, 1.0f/36.0f};
+
 		int i = n % Nx;
 		int j = n / Nx;
 

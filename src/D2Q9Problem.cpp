@@ -181,16 +181,11 @@ namespace LBM {
 			Kokkos::print_configuration(std::cout);
 			
 			// Define knobs
-			size_t Nx = _gridObj.Nx;
-			size_t Ny = _gridObj.Ny;
-			size_t N = Nx*Ny; // Total number of grid nodes
+			int Nx = _gridObj.Nx;
+			int Ny = _gridObj.Ny;
+			int N = Nx*Ny; // Total number of grid nodes
 			
-			// Forces
-			const float Fx = _Fx;
-			const float Fy = _Fy;
-
 			// Derive characteristics of the flow physics
-			const float U_lid = 0.058;
 			const float cs2 = 1.0f / 3.0f; // Speed of sound squared
 			const float tau = ( _nu/(cs2) ) + 0.5f; // Relaxation parameter
 			const float omega = 1.0f / tau;
@@ -213,9 +208,9 @@ namespace LBM {
 		//	Kokkos::deep_copy(ey, ey_h);
 		//	Kokkos::deep_copy(w, w_h);
 
-			constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-			constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-			constexpr float w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
+			//constexpr int ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
+			//constexpr int ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+			//constexpr float w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
 		//static const int* ex = _ex;
 		//static const int* ey = _ey;
 		//static const float* w = _w;
@@ -259,15 +254,13 @@ namespace LBM {
 				CalcEq(rho, ux, uy, f)
 			);
 
-			// Boundary tag
-			size_t iyT = Ny - 1;
 
 			// Set timer
 			Kokkos::Timer timer;
 
 
 			// Start Update Loop
-			for (size_t it = 0; it < _Nt; ++it) {
+			for (int it = 0; it < _Nt; ++it) {
 
 				// Compute macroscopic quantities from the distribution 
 				//D2Q9ReconstructState(_rho, _ux, _uy, _f, _ex, _ey, _gridObj, _Fx, _Fy, tau);
