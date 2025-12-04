@@ -35,14 +35,14 @@ git clone -b modular_omp https://github.com/kurttb/Lattice-Boltzmann-Solver.git
 The instructions for building the solver are as follows:
 
 ### Dependencies
-Different dependencies are required depending on the backend (Serial/OpenMP/CUDA) that you intend to build. For all builds, cmake and Kokkos are required. Paraview is also recommended for visualization. For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
+Different dependencies are required depending on the backend (Serial/OpenMP/CUDA) that you intend to build. For all builds, CMake and Kokkos are required. Paraview is also recommended for visualization. For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
 ```
 https://github.com/kokkos
 ```
 When building Kokkos, you must specify the build backend (Serial/OpenMP/CUDA), as well as the CPU/GPU architecture you wish to run on to obtain maximum performance optimizations
 
 ### Configuring, Compiling and Installing
-The build can be configured using cmake and by passing in the appropriate options:
+The build can be configured using CMake and by passing in the appropriate options:
 ```
 cd $PROJECT_ROOT
 mkdir build && cd build
