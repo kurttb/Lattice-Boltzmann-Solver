@@ -1,14 +1,27 @@
 // Example case using the modularized library for the case of a lid-driven cavity
 #include <string>
 #include <cmath>
+#include <iostream>
+#include <cstdlib>
 #include "D2Q9Problem.hpp"
 
 
-int main() {
+int main(int argc, char* argv[]) {
 
 	// Grid Points in Each Direction
-	const int Nx = 100;
-	const int Ny = 100;
+	int Nx = 100;
+	int Ny = 100;
+	int Nt = 50000;
+
+	if (argc >= 3) {
+		Nx = std::atoi(argv[1]);
+		Ny = std::atoi(argv[2]);
+	}
+	if (argc >= 4) {
+		Nt = std::atoi(argv[3]);
+	}
+
+	std::cout << "Running with Nx: " << Nx << ", Ny: " << Ny << ", Nt: " << Nt << std::endl;
 
 	// Set Problem Parameter
 	const float Re = 100; // Reynolds Number
@@ -33,7 +46,6 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	int Nt = 50000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions
