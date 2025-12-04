@@ -25,7 +25,7 @@ The solver can be downloaded by cloning it using the command:
 git clone https://github.com/kurttb/Lattice-Boltzmann-Solver.git
 ```
 
-A deprecated pure OpenMP branch exists (modular_omp), but is no longer maintained:
+A deprecated pure OpenMP branch (`modular_omp`) exists for legacy reference but is no longer maintained:
 ```
 git clone -b modular_omp https://github.com/kurttb/Lattice-Boltzmann-Solver.git 
 ```
@@ -85,7 +85,7 @@ Add your own simulation case by placing a file named `CASE_NAME_case.cpp` in the
 
 ### Additional Useful Commands
 	make clean
-		Removes the library and the built exectuables but keeps the configuration options.
+		Removes the library and the built executables but keeps the configuration options.
 	
 	make uninstall
 		Removes all installed files from 'make install'.
