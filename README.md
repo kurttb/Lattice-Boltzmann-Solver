@@ -35,7 +35,7 @@ git clone -b modular_omp https://github.com/kurttb/Lattice-Boltzmann-Solver.git
 The instructions for building the solver are as follows:
 
 ### Dependencies
-Different dependencies are required depending on the architecture in which you intend to build for. For all builds, cmake and Kokkos are required. Paraview is also recommended for visualization. For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
+Different dependencies are required depending on the backend (Serial/OpenMP/CUDA) that you intend to build. For all builds, cmake and Kokkos are required. Paraview is also recommended for visualization. For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
 ```
 https://github.com/kokkos
 ```
@@ -50,13 +50,13 @@ cmake -OPTIONS ../
 ```
 ### Common CMake Options
 
-| Option                    | Description                                                                                      |
-|---------------------------|--------------------------------------------------------------------------------------------------|
-| `-DKokkos_ROOT=/path`     | Path to Kokkos installation (default: `/usr/local`)                                              |
-| `-DCMAKE_CXX_COMPILER`    | C++ compiler to use. For CUDA builds, set to `${Kokkos_ROOT}/bin/nvcc_wrapper`                   |
-| `-DCMAKE_INSTALL_PREFIX`  | Installation directory (if you run `make install`)                                               |
-| `-DBUILD_SHARED_LIBS=ON`  | Build shared library instead of static (default: static)                                         |
-| `-DCMAKE_BUILD_TYPE`      | `Release` (default, fast) or `Debug`                                                             |
+| Option                         | Description                                                                                      |
+|---------------------------     |--------------------------------------------------------------------------------------------------|
+| `-DKokkos_ROOT=/path`          | Path to Kokkos installation (default: `/usr/local`)                                              |
+| `-DCMAKE_CXX_COMPILER`         | C++ compiler to use. For CUDA builds, set to `${Kokkos_ROOT}/bin/nvcc_wrapper`                   |
+| `-DCMAKE_INSTALL_PREFIX`       | Installation directory (if you run `make install`)                                               |
+| `-DBUILD_SHARED_LIBS=ON`       | Build shared library instead of static (default: static)                                         |
+| `-DCMAKE_BUILD_TYPE`           | `Release` (default, fast) or `Debug`                                                             |
 
 **Example (OpenMP build):**
 ```bash
@@ -91,5 +91,52 @@ Add your own simulation case by placing a file named `CASE_NAME_case.cpp` in the
 		Removes all installed files from 'make install'.
 
 ## Examples
-Several examples exist in examples/. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow.
+Several examples exist in examples/. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow. A minimal example for Couette flow is shown below:
+
+**Couette Flow Example:**
+``` c++
+#include <string>
+#include <cmath>
+#include "D2Q9Problem.hpp"
+
+int main() {
+
+    // Grid resolution
+    const int Nx = 100;
+    const int Ny = 100;
+
+    // Flow parameters
+    const float Re = 100.0f;   // Reynolds number
+    const float Ma = 0.1f;     // Mach number
+    const int   LChar = Ny;    // Characteristic length scale
+
+    // Derived quantities
+    float cs    = 1.0f / std::sqrt(3.0f);
+    float uChar = Ma * cs;
+    float nu    = uChar * LChar / Re;   // Kinematic viscosity
+
+    // Create LBM problem
+    auto prob = LBM::D2Q9Problem(Nx, Ny);
+
+    prob.setViscosity(nu);
+    prob.setIC(1.0f, 0.0f, 0.0f);        // rho0, ux0, uy0
+    prob.setNumTimeSteps(50000);
+
+    // Boundary conditions
+    prob.setBC("Top",    "WallTangentVelocity", uChar);
+    prob.setBC("Bottom", "BounceBack");
+    prob.setBC("Left",   "Periodic");
+    prob.setBC("Right",  "Periodic");
+
+    // Body force
+    prob.setForces(0.0f, 0.0f);
+
+    // Run and write output
+    prob.runSimulation();
+    prob.writeOutput("Couette.vtk");
+
+    return 0;
+}
+```
+
 
