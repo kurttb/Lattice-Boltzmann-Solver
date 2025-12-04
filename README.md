@@ -5,8 +5,8 @@ Built with Kokkos, the library targets both CPU and GPU architectures from a sin
 
 **Highlights**
 - Single codebase runs efficiently on multi-core CPUs and NVIDIA GPUs
-- Modular object-oriented design
-- Easily extendable to broader flows
+- Modular, object-oriented design
+- Easily extendable to incorporate additional physics (i.e. forcing, turbulence models)
 - Verified on Poiseuille channel, planar Couette, and lid-driven cavity flows
 - Arbitrary combinations of bounce-back, velocity, and periodic boundary conditions
 - Simple 15–20 line user code for new cases
