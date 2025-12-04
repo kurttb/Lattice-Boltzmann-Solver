@@ -15,7 +15,7 @@ Built with Kokkos, the library targets both CPU and GPU architectures from a sin
 
 | Hardware                                   | Threads / Device | MLUPS   | Notes                                      |
 |--------------------------------------------|------------------|---------|--------------------------------------------|
-| Great Lakes (Intel Xeon Gold 6154, Skylake) | 32 threads       | **527** | Bandwidth-saturated on a single socket     |
+| Intel Xeon Gold 6154, Skylake (Michigan Great Lakes CPU) | 32 threads       | **527** | Bandwidth-saturated on a single socket     |
 | Tesla V100 (Michigan Great Lakes GPU) | 1 GPU            | **3520**| Kokkos CUDA                                |
 | RTX 5070 Ti (personal workstation)        | 1 GPU            | **5500**| Kokkos CUDA                                |
 
