@@ -17,6 +17,16 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 
+# Determine whether build will be static or shared
+option(BUILD_SHARED "Build shared library" OFF) # Static by default
+if(BUILD_SHARED)
+	set(LBM_LIB_TYPE SHARED)
+else()
+	set(LBM_LIB_TYPE STATIC)
+endif()
+message(STATUS "BUILD TYPE: ${LBM_LIB_TYPE}") # Build type status
+
+
 
 # Define Variables for Kokkos Backend
 set(Kokkos_ROOT "/home/kurttb/kokkos-openmp-install" CACHE PATH "Root directory of Kokkos installation")
@@ -27,10 +37,11 @@ find_package(Kokkos REQUIRED)
 
 # Set Location for Libraries
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 
 # Add Library and its source files
-add_library(LBM STATIC
+add_library(LBM ${LBM_LIB_TYPE}
 		src/D2Q9Problem.cpp
 		src/VtkWriter.cpp
 )
@@ -76,12 +87,15 @@ endforeach()
 include(GNUInstallDirs)
 
 install(TARGETS LBM
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+# Add an uninstall function
 
 
 
