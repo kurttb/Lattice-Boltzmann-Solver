@@ -3,6 +3,20 @@
 This project implements a modular, high-performance Lattice Boltzmann Method (LBM) solver for 2D flows on general rectangular domains.
 Built with Kokkos, the library targets both CPU and GPU architectures from a single codebase, allowing for portable performance across modern HPC systems.
 
+**Highlights**
+- Single codebase runs efficiently on multi-core CPUs and NVIDIA GPUs
+- Verified on Poiseuille channel, planar Couette, and lid-driven cavity flows
+- Arbitrary combinations of bounce-back, velocity, and periodic boundary conditions
+- Simple 15–20 line user code for new cases
+
+### Performance Summary (single-precision, full simulation with boundary conditions)
+
+| Hardware                                   | Threads / Device | MLUPS   | Notes                                      |
+|--------------------------------------------|------------------|---------|--------------------------------------------|
+| Great Lakes (Intel Xeon Gold 6154, Skylake) | 32 threads       | **527** | Bandwidth-saturated on a single socket     |
+| Tesla V100 (NERSC Perlmutter / Great Lakes GPU) | 1 GPU            | **3520**| Kokkos CUDA                                |
+| RTX 5070 Ti (personal workstation)        | 1 GPU            | **5500**| Kokkos CUDA                                |
+
 ## Downloading the solver
 The solver can be downloaded by cloning it using the command:
 ```
@@ -14,11 +28,11 @@ git clone https://github.com/kurttb/Lattice-Boltzmann-Solver.git
 The instructions for building the solver are as follows:
 
 ### Dependencies
-The solver requires several dependencies in order to build the software. Different dependencies are required depending on the architecture in which you intend to build for. For all builds, cmake and Kokkos are required. Paraview is also required for visualization. A deprecated pure OpenMP branch exists (modular_omp), but is not longer maintained
+The solver requires several dependencies in order to build the software. Different dependencies are required depending on the architecture in which you intend to build for. For all builds, cmake and Kokkos are required. Paraview is also required for visualization. A deprecated pure OpenMP branch exists (modular_omp), but is no longer maintained
 ```
 git clone -b modular_omp https://github.com/kurttb/Lattice-Boltzmann-Solver.git 
 ```
-However, development on this branch is deprecated, and only Kokkos builds will be supported moving into the future. For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
+For Kokkos builds, the required backends must be built on your machine. Using an OpenMP backend requires having OpenMP built on your machine, and using a CUDA backend requires the NVIDIA CUDA toolkit. Instructions for building Kokkos can be found at:
 ```
 https://github.com/kokkos
 ```
@@ -58,4 +72,7 @@ ${CASE\_NAME}\_case.cpp and by placing this file in ${PROJECT\_ROOT}/examples.
 	
 	make uninstall
 		Removes all installed files from 'make install'.
+
+## Examples
+Several examples exist in ${PROJECT\_ROOT}/examples. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow.
 
