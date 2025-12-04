@@ -7,8 +7,8 @@
 int main() {
 
 	// Grid Points in Each Direction
-	const int Nx = 100;
-	const int Ny = 100;
+	const int Nx = 1000;
+	const int Ny = 1000;
 
 	// Set Problem Parameter
 	const float Re = 100; // Reynolds Number
@@ -33,7 +33,7 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	int Nt = 50000;
+	int Nt = 1000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions

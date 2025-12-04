@@ -4,6 +4,7 @@
 #include <Kokkos_Core.hpp>
 
 using vec2 = Kokkos::View<float**>;
+using vec2_const = Kokkos::View<const float**>;
 
 struct ComputeStreaming {
 	vec2_const f;

@@ -74,6 +74,11 @@ namespace LBM {
 		// Post-process
 		void writeOutput(std::string filePath);
 
+		// Getters for testing
+		std::vector<float> getRho() const;
+		std::vector<float> getUx() const;
+		std::vector<float> getUy() const;
+
 	};
 
 }

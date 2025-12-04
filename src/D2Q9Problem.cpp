@@ -20,6 +20,10 @@ namespace LBM {
 	// Constructor
 	D2Q9Problem::D2Q9Problem(const size_t Nx, const size_t Ny) {
 
+		if (Nx == 0 || Ny == 0) {
+			throw std::invalid_argument("Grid dimensions must be non-zero");
+		}
+
 		// Set Grid sizes
 		_gridObj.Nx = Nx;
 		_gridObj.Ny = Ny;
@@ -89,12 +93,18 @@ namespace LBM {
 
 	// Set Viscosity
 	void D2Q9Problem::setViscosity(const float nu) {
+		if (nu < 0) {
+			throw std::invalid_argument("Viscosity must be non-negative");
+		}
 		_nu = nu;
 	}
 
 
 	// Set initial condition
 	void D2Q9Problem::setIC(const float rho0, const float ux0, const float uy0) {
+		if (rho0 <= 0) {
+			throw std::invalid_argument("Density must be positive");
+		}
 		_rho0 = rho0;
 		_ux0 = ux0;
 		_uy0 = uy0;
@@ -175,7 +185,11 @@ namespace LBM {
 	// Solve
 	void D2Q9Problem::runSimulation() {
 		
-		Kokkos::initialize();
+		bool initialized_here = false;
+		if (!Kokkos::is_initialized()) {
+			Kokkos::initialize();
+			initialized_here = true;
+		}
 		{
 			// Show what Kokkos is running on
 			Kokkos::print_configuration(std::cout);
@@ -454,7 +468,9 @@ namespace LBM {
 			}
 
 		}
-		Kokkos::finalize();
+		if (initialized_here) {
+			Kokkos::finalize();
+		}
 	}
 
 
@@ -472,6 +488,10 @@ namespace LBM {
 	// Destructor
 	D2Q9Problem::~D2Q9Problem() = default;
 
+	// Getters
+	std::vector<float> D2Q9Problem::getRho() const { return _rho; }
+	std::vector<float> D2Q9Problem::getUx() const { return _ux; }
+	std::vector<float> D2Q9Problem::getUy() const { return _uy; }
 
 }
 

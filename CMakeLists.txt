@@ -19,7 +19,7 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 
 # Define Variables for Kokkos Backend
-set(Kokkos_ROOT "/usr/local" CACHE PATH "Root directory of Kokkos installation")
+set(Kokkos_ROOT "/home/kurttb/kokkos-openmp-install" CACHE PATH "Root directory of Kokkos installation")
 
 # Find Kokkos
 find_package(Kokkos REQUIRED)
@@ -98,4 +98,7 @@ add_compiler_flag("-Wextra")
 add_compiler_flag("-Wpedantic")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops")
+
+enable_testing()
+add_subdirectory(tests)
 
