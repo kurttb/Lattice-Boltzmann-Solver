@@ -91,7 +91,7 @@ Add your own simulation case by placing a file named `CASE_NAME_case.cpp` in the
 		Removes all installed files from 'make install'.
 
 ## Examples
-Several examples exist in examples/. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow. A minimal example for Couette flow is shown below:
+Several examples exist in `examples/`. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow. A minimal example for Couette flow is shown below:
 
 **Couette Flow Example:**
 ``` c++
