@@ -55,7 +55,7 @@ cmake -OPTIONS ../
 | `-DKokkos_ROOT=/path`          | Path to Kokkos installation (default: `/usr/local`)                                              |
 | `-DCMAKE_CXX_COMPILER`         | C++ compiler to use. For CUDA builds, set to `${Kokkos_ROOT}/bin/nvcc_wrapper`                   |
 | `-DCMAKE_INSTALL_PREFIX`       | Installation directory (if you run `make install`)                                               |
-| `-DBUILD_SHARED_LIBS=ON`       | Build shared library instead of static (default: static)                                         |
+| `-DBUILD_SHARED=ON`       | Build shared library instead of static (default: static)                                         |
 | `-DCMAKE_BUILD_TYPE`           | `Release` (default, fast) or `Debug`                                                             |
 
 **Example (OpenMP build):**
