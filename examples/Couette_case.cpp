@@ -7,18 +7,18 @@
 int main() {
 
 	// Grid Points in Each Direction
-	const size_t Nx = 100;
-	const size_t Ny = 100;
+	const int Nx = 100;
+	const int Ny = 100;
 
 	// Set Problem Parameter
-	const double Re = 100; // Reynolds Number
-	const double Ma = 0.1; // Mach Number
-	const size_t LChar = Ny; // Characteristic length scale
+	const float Re = 100; // Reynolds Number
+	const float Ma = 0.1; // Mach Number
+	const int LChar = Ny; // Characteristic length scale
 
 	// Derive Viscosity and Derive Characteristic Velocity
-	double cs = 1.0 / std::sqrt(3); // Speed of sound
-	double uChar = Ma*cs; // Characteristic Velocity
-	double nu = uChar * LChar / Re; // Viscosity
+	float cs = 1.0 / std::sqrt(3); // Speed of sound
+	float uChar = Ma*cs; // Characteristic Velocity
+	float nu = uChar * LChar / Re; // Viscosity
 
 	// Define D2Q9 Lattice Problem
 	auto prob = LBM::D2Q9Problem(Nx, Ny);
@@ -27,19 +27,19 @@ int main() {
 	prob.setViscosity(nu); 
 
 	// Initial Conditions
-	const double rho0 = 1.0;
-	const double ux0 = 0.0;
-	const double uy0 = 0.0;
+	const float rho0 = 1.0;
+	const float ux0 = 0.0;
+	const float uy0 = 0.0;
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	size_t Nt = 50000;
+	int Nt = 50000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions
 	std::string BCTop = "Top"; // Options: Top, Bottom, Right, Left
 	std::string BCTopType = "WallTangentVelocity"; // Options: Periodic, WallTangentVelocity, BounceBack
-	double uT = uChar; // Tangent Velocity
+	float uT = uChar; // Tangent Velocity
 	prob.setBC(BCTop, BCTopType, uT); // Sets the boundary condition
 
 	std::string BCBottom = "Bottom"; // Bottom BC
@@ -57,8 +57,8 @@ int main() {
 	
 
 	// Set body forces
-	const double Fx = 0.0;
-	const double Fy = 0.0;
+	const float Fx = 0.0;
+	const float Fy = 0.0;
 	prob.setForces(Fx, Fy);
 
 
