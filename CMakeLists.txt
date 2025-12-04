@@ -6,6 +6,18 @@ project(LBM VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Default build type to release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+#message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+#message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
+#message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
+#message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+
+
 # Define Variables for Kokkos Backend
 set(Kokkos_ROOT "/usr/local" CACHE PATH "Root directory of Kokkos installation")
 
@@ -30,7 +42,7 @@ target_link_libraries(LBM
 )
 
 # Add include directory
-target_include_directories(LBM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(LBM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Set location for exectuables
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -43,21 +55,34 @@ foreach(file ${files})
 	get_filename_component(name ${file} NAME_WE) # Get name without extension
 	add_executable(${name}) # Make an executable
 
+	# Add source file for target
 	target_sources(${name}
 		PRIVATE
 			${file}
-	) # Add source file for target
+	)
 
+	# Link against the LBM library
 	target_link_libraries(${name}
 		PRIVATE
 			LBM
-	) # Link against the LBM library
-
+	)
 
 	# -I flag for the specific target
 	target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 endforeach()
+
+# Add an install target
+include(GNUInstallDirs)
+
+install(TARGETS LBM
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
 
 
 
@@ -68,8 +93,9 @@ endmacro()
 
 
 # Add compiler flags
-add_compiler_flag("-O3")
-add_compiler_flag("-ffast-math")
 add_compiler_flag("-Wall")
 add_compiler_flag("-Wextra")
 add_compiler_flag("-Wpedantic")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops")
+
