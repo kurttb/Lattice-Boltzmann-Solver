@@ -37,6 +37,10 @@ namespace LBM {
 			// Viscosity
 			float _nu;
 
+			// Smagorinsky Constant
+			// 0.15 is a reasonable value for LES
+			float _Cs = 0.15;
+
 			// Distribution function
 			vector<float> _f;
 
@@ -67,6 +71,7 @@ namespace LBM {
 		void setNumTimeSteps(const size_t Nt);
 		void setBC(const std::string& BCName, const std::string& BCType, const float uT = 0.0);
 		void setViscosity(const float nu);
+		void setSmagorinskyConstant(const float Cs);
 
 		// Run the simulation
 		void runSimulation();

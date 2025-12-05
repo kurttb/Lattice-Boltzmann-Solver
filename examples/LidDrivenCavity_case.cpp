@@ -7,8 +7,8 @@
 int main() {
 
 	// Grid Points in Each Direction
-	const int Nx = 100;
-	const int Ny = 100;
+	const int Nx = 1000;
+	const int Ny = 1000;
 
 	// Set Problem Parameter
 	const float Re = 100; // Reynolds Number

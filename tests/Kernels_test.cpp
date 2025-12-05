@@ -127,7 +127,7 @@ TEST(KernelTest, CollisionConservationTest) {
 
     float omega = 1.0f; // Relaxation parameter
 
-    Kokkos::parallel_for("CollTest", N, ComputeCollision(rho, ux, uy, f, omega));
+    Kokkos::parallel_for("CollTest", N, ComputeCollision(rho, ux, uy, f, omega, 0.0f));
     Kokkos::fence();
 
     Kokkos::deep_copy(f_h, f);

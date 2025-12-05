@@ -99,6 +99,14 @@ namespace LBM {
 		_nu = nu;
 	}
 
+	// Set Smagorinsky Constant
+	void D2Q9Problem::setSmagorinskyConstant(const float Cs) {
+		if (Cs < 0) {
+			throw std::invalid_argument("Smagorinsky Constant must be non-negative");
+		}
+		_Cs = Cs;
+	}
+
 
 	// Set initial condition
 	void D2Q9Problem::setIC(const float rho0, const float ux0, const float uy0) {
@@ -327,7 +335,7 @@ namespace LBM {
 
 				Kokkos::parallel_for("Collision",
 					N,
-					ComputeCollision(rho, ux, uy, f, omega)
+					ComputeCollision(rho, ux, uy, f, omega, _Cs)
 				);
 
 

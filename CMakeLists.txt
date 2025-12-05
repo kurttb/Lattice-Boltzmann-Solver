@@ -29,7 +29,7 @@ message(STATUS "BUILD TYPE: ${LBM_LIB_TYPE}") # Build type status
 
 
 # Define Variables for Kokkos Backend
-set(Kokkos_ROOT "/home/kurttb/kokkos-openmp-install" CACHE PATH "Root directory of Kokkos installation")
+set(Kokkos_ROOT "/home/kurttb/kokkos-cuda-install" CACHE PATH "Root directory of Kokkos installation")
 
 # Find Kokkos
 find_package(Kokkos REQUIRED)
