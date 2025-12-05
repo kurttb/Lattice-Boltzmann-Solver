@@ -113,6 +113,16 @@ add_compiler_flag("-Wpedantic")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops")
 
-enable_testing()
-add_subdirectory(tests)
+# Testing
+set(LBM_ENABLE_TESTS "Enable Testing" OFF) # Tests are off by default
+if(LBM_ENABLE_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
+
+	 add_custom_target(check
+        COMMAND ctest --output-on-failure
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running tests..."
+    )
+endif()
 
