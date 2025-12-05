@@ -29,7 +29,7 @@ message(STATUS "BUILD TYPE: ${LBM_LIB_TYPE}") # Build type status
 
 
 # Define Variables for Kokkos Backend
-set(Kokkos_ROOT "/home/kurttb/kokkos-openmp-install" CACHE PATH "Root directory of Kokkos installation")
+set(Kokkos_ROOT "/usr/local" CACHE PATH "Root directory of Kokkos installation")
 
 # Find Kokkos
 find_package(Kokkos REQUIRED)
@@ -114,7 +114,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops")
 
 # Testing
-set(LBM_ENABLE_TESTS "Enable Testing" OFF) # Tests are off by default
+option(LBM_ENABLE_TESTS "Enable Testing" OFF) # Tests are off by default
 if(LBM_ENABLE_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
