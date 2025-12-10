@@ -121,8 +121,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -ffast-math")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops")
 
 # Testing
-option(LBM_ENABLE_TESTS "Enable Testing" OFF) # Tests are off by default
-if(LBM_ENABLE_TESTS)
+option(ENABLE_TESTS "Enable Testing" OFF) # Tests are off by default
+if(ENABLE_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
 
