@@ -16,8 +16,8 @@ Built with Kokkos, the library targets both CPU and GPU architectures from a sin
 | Hardware                                   | Threads / Device | MLUPS   | Notes                                      |
 |--------------------------------------------|------------------|---------|--------------------------------------------|
 | Intel Xeon Gold 6154, Skylake (Michigan Great Lakes CPU) | 32 threads       | **527** | Bandwidth-saturated on a single socket     |
-| Tesla V100 (Michigan Great Lakes GPU) | 1 GPU            | **3520**| Kokkos CUDA                                |
-| RTX 5070 Ti (personal workstation)        | 1 GPU            | **5500**| Kokkos CUDA                                |
+| Tesla V100 (Michigan Great Lakes GPU) | 1 GPU            | **3700**| Kokkos CUDA                                |
+| RTX 5070 Ti (personal workstation)        | 1 GPU            | **4000**| Kokkos CUDA                                |
 
 ## Downloading the solver
 The solver can be downloaded by cloning it using the command:
@@ -57,6 +57,7 @@ cmake -OPTIONS ../
 | `-DCMAKE_INSTALL_PREFIX`       | Installation directory (if you run `make install`)                                               |
 | `-DBUILD_SHARED=ON`       | Build shared library instead of static (default: static)                                         |
 | `-DCMAKE_BUILD_TYPE`           | `Release` (default, fast) or `Debug`                                                             |
+| `-DENABLE_TESTS=ON`           | Enable Tests (off by default)                                                             |
 
 **Example (OpenMP build):**
 ```bash
@@ -89,6 +90,9 @@ Add your own simulation case by placing a file named `CASE_NAME_case.cpp` in the
 	
 	make uninstall
 		Removes all installed files from 'make install'.
+
+	make check
+		Runs unit test suite
 
 ## Examples
 Several examples exist in `examples/`. Cases include Couette Flow, a Lid-Driven cavity, and Poiseuille Flow. A minimal tutorial case for Couette flow is shown below:
