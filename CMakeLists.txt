@@ -42,6 +42,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 # Add Library and its source files
 add_library(LBM ${LBM_LIB_TYPE}
+		src/GeneralProblem.cpp
 		src/D2Q9Problem.cpp
 		src/VtkWriter.cpp
 )

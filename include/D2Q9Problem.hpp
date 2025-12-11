@@ -5,48 +5,18 @@
 #include <string>
 #include "GridTypes.hpp"
 #include "BoundaryConditions.hpp"
+#include "GeneralProblem.hpp"
 
 
 namespace LBM {
 
-	class D2Q9Problem
+	class D2Q9Problem : public GeneralProblem
 	{
 
-		private:
+		protected:
 
 			// Computational grid structure
 			CartesianGrid2D _gridObj; 
-
-			// Body Forces
-			float _Fx = 0.0;
-			float _Fy = 0.0;
-
-			// Initial Conditions
-			float _rho0 = 1.0;
-			float _ux0 = 0.0;
-			float _uy0 = 0.0;
-
-			// Number of time steps
-			int _Nt = 50000;
-
-			// Fields
-			vector<float> _rho;
-			vector<float> _ux;
-			vector<float> _uy;
-
-			// Viscosity
-			float _nu;
-
-			// Distribution function
-			vector<float> _f;
-
-			// Define Lattice - Start at rest, go east, and move counterclockwise
-			static constexpr int _ex[9] = {0, 1, 1, 0, -1, -1, -1, 0, 1};
-			static constexpr int _ey[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
-			static constexpr float _w[9] = {4.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0, 1.0/9.0, 1.0/36.0}; // Weights for Maxwellian Distribution
-
-			// Write path
-            std::string _filePath;
 
 			// Boundary Conditions
 			BCData _BCTop;
@@ -55,37 +25,28 @@ namespace LBM {
 			BCData _BCLeft;
 
 
-	public:
+		public:
 
-		// Constructor/Destructor
-		D2Q9Problem(const size_t Nx, const size_t Ny);
-		~D2Q9Problem();
+			// Constructor/Destructor
+			D2Q9Problem(const int Nx, const int Ny);
+			~D2Q9Problem() override;
 
-		// Pre-processing functions
-		void setIC(const float rho0, const float ux0, const float uy0);
-		void setForces(const float Fx, const float Fy);
-		void setNumTimeSteps(const size_t Nt);
-		void setBC(const std::string& BCName, const std::string& BCType, const float uT = 0.0);
-		void setViscosity(const float nu);
+			// Pre-processing functions
+			void setBC(const std::string& BCName, const std::string& BCType, const float uT = 0.0);
+			// Run the simulation
+			void runSimulation() override;
 
-		// Run the simulation
-		void runSimulation();
+			// Post-process
+			void writeOutput(std::string filePath) override;
 
-		// Post-process
-		void writeOutput(std::string filePath);
+			// Getters for testing
+			std::vector<float> getRho() const;
+			std::vector<float> getUx() const;
+			std::vector<float> getUy() const;
 
-		// Getters for testing
-		std::vector<float> getRho() const;
-		std::vector<float> getUx() const;
-		std::vector<float> getUy() const;
-
-	};
+		};
 
 }
-
-
-
-
 
 
 
