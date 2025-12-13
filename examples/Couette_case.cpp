@@ -13,7 +13,7 @@ int main() {
 	// Set Problem Parameter
 	const float Re = 100; // Reynolds Number
 	const float Ma = 0.1; // Mach Number
-	const int LChar = Ny; // Characteristic length scale
+	const int LChar = Ny - 1; // Characteristic length scale
 
 	// Derive Viscosity and Derive Characteristic Velocity
 	float cs = 1.0 / std::sqrt(3); // Speed of sound

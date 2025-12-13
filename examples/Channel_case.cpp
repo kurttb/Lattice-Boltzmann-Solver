@@ -13,7 +13,7 @@ int main() {
 	// Set Problem Parameter
 	const float Re = 100; // Reynolds Number
 	const float Ma = 0.1; // Mach Number
-	const int LChar = Ny; // Characteristic length scale
+	const int LChar = Ny - 1; // Characteristic length scale
 
 	// Derive Viscosity and Derive Characteristic Velocity
 	float cs = 1.0 / std::sqrt(3); // Speed of sound
@@ -33,7 +33,7 @@ int main() {
 	prob.setIC(rho0, ux0, uy0);
 
 	// Set time step
-	int Nt = 50000;
+	int Nt = 200000;
 	prob.setNumTimeSteps(Nt);
 
 	// Set Boundary Conditions
@@ -56,7 +56,7 @@ int main() {
 	
 
 	// Set body forces
-	const float Fx = 1e-5;
+	const float Fx = 12 * nu * uChar / (LChar * LChar);
 	const float Fy = 0.0;
 	prob.setForces(Fx, Fy);
 
