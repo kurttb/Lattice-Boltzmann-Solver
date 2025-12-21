@@ -43,7 +43,7 @@ namespace LBM {
 		// Write the density
 		for (size_t j = 0; j < Ny; ++j) {
 			for (size_t i = 0; i < Nx; ++i) {
-				file << rho[i] << " ";
+				file << rho[i + Nx*j] << " ";
 			}
 			file << "\n";
 		}
